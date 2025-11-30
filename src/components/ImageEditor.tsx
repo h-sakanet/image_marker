@@ -50,23 +50,43 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     const [debugInfo, setDebugInfo] = useState<string>('');
 
-    const handlePointerDown = (e: React.PointerEvent) => {
-        setDebugInfo(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
+    // Native event listener for pointer down to handle passive: false
+    useEffect(() => {
+        const svg = svgRef.current;
+        if (!svg) return;
 
-        // Allow touch to scroll (don't preventDefault, don't capture)
-        if (e.pointerType === 'touch') return;
+        const onPointerDown = (e: PointerEvent) => {
+            setDebugInfo(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
 
-        if (activeTool === 'pen') {
-            e.preventDefault();
-            e.stopPropagation();
-            (e.target as Element).setPointerCapture(e.pointerId);
+            // Allow touch to scroll
+            if (e.pointerType === 'touch') return;
 
-            const pos = getSvgCoordinates(e);
-            setIsDrawing(true);
-            setStartPos(pos);
-            setCurrentPos(pos);
-        }
-    };
+            if (activeTool === 'pen') {
+                e.preventDefault();
+                e.stopPropagation();
+                (e.target as Element).setPointerCapture(e.pointerId);
+
+                // Calculate coordinates manually since we're in a native event
+                const CTM = svg.getScreenCTM();
+                if (!CTM) return;
+
+                const pos = {
+                    x: (e.clientX - CTM.e) / CTM.a,
+                    y: (e.clientY - CTM.f) / CTM.d
+                };
+
+                setIsDrawing(true);
+                setStartPos(pos);
+                setCurrentPos(pos);
+            }
+        };
+
+        svg.addEventListener('pointerdown', onPointerDown, { passive: false });
+
+        return () => {
+            svg.removeEventListener('pointerdown', onPointerDown);
+        };
+    }, [activeTool]); // Re-bind when tool changes
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (isDrawing) {
@@ -127,13 +147,13 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 alt="Study material"
                 className="block max-w-full h-auto pointer-events-none select-none"
                 draggable={false}
+                onError={(e) => console.error("Image load error:", e)}
             />
 
             <svg
                 ref={svgRef}
                 className="absolute inset-0 w-full h-full"
                 viewBox={imgRef.current ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
-                onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}

@@ -22,14 +22,12 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({ imageData, markers }) => {
     }, [imageData]);
 
     const handleMarkerClick = (index: number, e: React.PointerEvent) => {
-        if (e.pointerType === 'pen') {
-            e.stopPropagation();
-            setRevealedIndices(prev => {
-                const newSet = new Set(prev);
-                newSet.add(index);
-                return newSet;
-            });
-        }
+        e.stopPropagation();
+        setRevealedIndices(prev => {
+            const newSet = new Set(prev);
+            newSet.add(index);
+            return newSet;
+        });
     };
 
     return (

@@ -49,8 +49,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        if (e.pointerType !== 'pen') return;
-
         if (activeTool === 'pen') {
             e.preventDefault();
             e.stopPropagation();
@@ -65,7 +63,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDrawing || activeTool !== 'pen') return;
-        if (e.pointerType !== 'pen') return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -76,7 +73,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDrawing || activeTool !== 'pen') return;
-        if (e.pointerType !== 'pen') return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -134,7 +130,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                         fillOpacity="1.0"
                         stroke="none"
                         onPointerDown={(e) => {
-                            if (activeTool === 'eraser' && e.pointerType === 'pen') {
+                            if (activeTool === 'eraser') {
                                 e.stopPropagation();
                                 handleMarkerClick(index);
                             }

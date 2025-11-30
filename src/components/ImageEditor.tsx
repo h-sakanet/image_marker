@@ -55,6 +55,23 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         const svg = svgRef.current;
         if (!svg) return;
 
+        // Handle touchstart to prevent scrolling for Apple Pencil
+        const onTouchStart = (e: TouchEvent) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                // Check for stylus (Apple Pencil)
+                // @ts-ignore - touchType is standard on iOS Safari but might not be in standard TS defs
+                const isStylus = touch.touchType === 'stylus' || touch.touchType === 'pen';
+
+                if (isStylus) {
+                    e.preventDefault(); // Critical: Stop iOS scroll
+                    setDebugInfo(`TouchStart: Stylus/Pen`);
+                } else {
+                    setDebugInfo(`TouchStart: Direct`);
+                }
+            }
+        };
+
         const onPointerDown = (e: PointerEvent) => {
             setDebugInfo(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
 
@@ -81,9 +98,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             }
         };
 
+        svg.addEventListener('touchstart', onTouchStart, { passive: false });
         svg.addEventListener('pointerdown', onPointerDown, { passive: false });
 
         return () => {
+            svg.removeEventListener('touchstart', onTouchStart);
             svg.removeEventListener('pointerdown', onPointerDown);
         };
     }, [activeTool]); // Re-bind when tool changes

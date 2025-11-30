@@ -14,9 +14,13 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({ imageData, markers }) => {
 
     useEffect(() => {
         if (imageData instanceof Blob) {
-            const url = URL.createObjectURL(imageData);
-            setImageUrl(url);
-            return () => URL.revokeObjectURL(url);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    setImageUrl(e.target.result as string);
+                }
+            };
+            reader.readAsDataURL(imageData);
         } else {
             setImageUrl(imageData as string);
         }
@@ -26,6 +30,19 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({ imageData, markers }) => {
     useEffect(() => {
         const svg = svgRef.current;
         if (!svg) return;
+
+        // Handle touchstart to prevent scrolling for Apple Pencil
+        const onTouchStart = (e: TouchEvent) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                // @ts-ignore
+                const isStylus = touch.touchType === 'stylus' || touch.touchType === 'pen';
+
+                if (isStylus) {
+                    e.preventDefault();
+                }
+            }
+        };
 
         const onPointerDown = (e: PointerEvent) => {
             // Allow touch to scroll
@@ -47,9 +64,11 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({ imageData, markers }) => {
             }
         };
 
+        svg.addEventListener('touchstart', onTouchStart, { passive: false });
         svg.addEventListener('pointerdown', onPointerDown, { passive: false });
 
         return () => {
+            svg.removeEventListener('touchstart', onTouchStart);
             svg.removeEventListener('pointerdown', onPointerDown);
         };
     }, []);

@@ -48,7 +48,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
     };
 
+    const [debugInfo, setDebugInfo] = useState<string>('');
+
     const handlePointerDown = (e: React.PointerEvent) => {
+        setDebugInfo(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
+
         // Allow touch to scroll (don't preventDefault, don't capture)
         if (e.pointerType === 'touch') return;
 
@@ -65,6 +69,10 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
+        if (isDrawing) {
+            setDebugInfo(`Move: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
+        }
+
         if (!isDrawing || activeTool !== 'pen') return;
 
         // Double check pointer type just in case, though isDrawing should handle it
@@ -108,6 +116,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     return (
         <div className="relative inline-block shadow-xl rounded-lg overflow-hidden bg-white mb-8">
+            {/* Debug Overlay */}
+            <div className="fixed top-20 right-4 bg-black/80 text-white p-2 rounded text-xs z-50 pointer-events-none">
+                {debugInfo || 'Ready'}
+            </div>
+
             <img
                 ref={imgRef}
                 src={imageUrl}

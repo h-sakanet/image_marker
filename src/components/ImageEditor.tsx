@@ -49,6 +49,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
+        // Allow touch to scroll (don't preventDefault, don't capture)
+        if (e.pointerType === 'touch') return;
+
         if (activeTool === 'pen') {
             e.preventDefault();
             e.stopPropagation();
@@ -63,6 +66,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDrawing || activeTool !== 'pen') return;
+
+        // Double check pointer type just in case, though isDrawing should handle it
+        if (e.pointerType === 'touch') return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -112,7 +118,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
             <svg
                 ref={svgRef}
-                className="absolute inset-0 w-full h-full touch-none"
+                className="absolute inset-0 w-full h-full"
                 viewBox={imgRef.current ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}

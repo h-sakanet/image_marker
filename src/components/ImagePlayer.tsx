@@ -22,6 +22,10 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({ imageData, markers }) => {
     }, [imageData]);
 
     const handleMarkerClick = (index: number, e: React.PointerEvent) => {
+        // Allow touch to scroll
+        if (e.pointerType === 'touch') return;
+
+        e.preventDefault();
         e.stopPropagation();
         setRevealedIndices(prev => {
             const newSet = new Set(prev);

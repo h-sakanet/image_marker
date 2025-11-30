@@ -19,34 +19,48 @@ const DeckCreateModal: React.FC<DeckCreateModalProps> = ({ onClose, onCreated })
         }
     };
 
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || files.length === 0) return;
 
         setIsSaving(true);
         try {
-            const deckId = await db.decks.add({
-                title,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
+            // Convert all files to Base64
+            const base64Images = await Promise.all(files.map(fileToBase64));
 
-            const imagePromises = files.map(async (file, index) => {
-                return db.images.add({
-                    deckId: Number(deckId),
-                    imageData: file,
+            await db.transaction('rw', db.decks, db.images, async () => {
+                const deckId = await db.decks.add({
+                    title,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+
+                const imagePromises = base64Images.map((base64, index) => ({
+                    deckId,
+                    imageData: base64,
                     order: index,
                     markers: []
-                });
-            });
+                }));
 
-            await Promise.all(imagePromises);
+                await db.images.bulkAdd(imagePromises);
+            });
 
             onCreated();
             onClose();
+            setTitle('');
+            setFiles([]);
         } catch (error) {
-            console.error("Failed to save deck:", error);
-            alert("Failed to save deck. Please try again.");
+            console.error('Failed to create deck:', error);
+            alert('Failed to create deck. Please try again.');
         } finally {
             setIsSaving(false);
         }

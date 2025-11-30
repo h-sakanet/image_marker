@@ -75,6 +75,14 @@ const Editor: React.FC = () => {
 
     // Touch Handlers for Zoom/Pan
     const handleTouchStart = (e: React.TouchEvent) => {
+        // If using pen and touching the drawing area, ignore pan/zoom
+        if (activeTool === 'pen') {
+            const target = e.target as Element;
+            if (target.closest('svg')) {
+                return;
+            }
+        }
+
         if (e.touches.length === 1) {
             lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         } else if (e.touches.length === 2) {

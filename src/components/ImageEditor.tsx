@@ -23,6 +23,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     const [isDrawing, setIsDrawing] = useState(false);
     const [startPos, setStartPos] = useState<{ x: number, y: number } | null>(null);
     const [currentPos, setCurrentPos] = useState<{ x: number, y: number } | null>(null);
+    const [debugLog, setDebugLog] = useState<string[]>([]);
+
+    const addLog = (msg: string) => setDebugLog(prev => [msg, ...prev].slice(0, 5));
 
     const svgRef = useRef<SVGSVGElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
@@ -31,7 +34,20 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         if (imageData instanceof Blob) {
             const url = URL.createObjectURL(imageData);
             setImageUrl(url);
-            return () => URL.revokeObjectURL(url);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    setImageUrl(e.target.result as string);
+                }
+            };
+            reader.onerror = (e) => {
+                addLog(`ReadErr: ${e.target?.error?.message}`);
+            };
+            try {
+                reader.readAsDataURL(imageData);
+            } catch (e) {
+                addLog(`BlobErr: ${e}`);
+            }
         } else {
             setImageUrl(imageData as string);
         }
@@ -48,8 +64,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
     };
 
-    const [debugInfo, setDebugInfo] = useState<string>('');
-
     // Native event listener for pointer down to handle passive: false
     useEffect(() => {
         const svg = svgRef.current;
@@ -57,23 +71,49 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
         // Handle touchstart to prevent scrolling for Apple Pencil
         const onTouchStart = (e: TouchEvent) => {
-            if (e.touches.length > 0) {
-                const touch = e.touches[0];
-                // Check for stylus (Apple Pencil)
-                // @ts-ignore - touchType is standard on iOS Safari but might not be in standard TS defs
-                const isStylus = touch.touchType === 'stylus' || touch.touchType === 'pen';
+            let hasStylus = false;
+            const types = [];
 
-                if (isStylus) {
-                    e.preventDefault(); // Critical: Stop iOS scroll
-                    setDebugInfo(`TouchStart: Stylus/Pen`);
-                } else {
-                    setDebugInfo(`TouchStart: Direct`);
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                // @ts-ignore
+                const type = touch.touchType;
+                types.push(type);
+                if (type === 'stylus' || type === 'pen') {
+                    hasStylus = true;
                 }
+            }
+
+            addLog(`TS: ${types.join(',')}`);
+
+            if (hasStylus) {
+                e.preventDefault(); // Critical: Stop iOS scroll
+            }
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+            // If we are drawing, we MUST stop scrolling
+            // But we need to be careful not to stop finger scrolling if we are not drawing with pen
+            // However, if we started with pen, we should prevent default.
+
+            // Check if any active touch is stylus
+            let hasStylus = false;
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                // @ts-ignore
+                const type = touch.touchType;
+                if (type === 'stylus' || type === 'pen') {
+                    hasStylus = true;
+                }
+            }
+
+            if (hasStylus) {
+                e.preventDefault();
             }
         };
 
         const onPointerDown = (e: PointerEvent) => {
-            setDebugInfo(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
+            addLog(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
 
             // Allow touch to scroll
             if (e.pointerType === 'touch') return;
@@ -99,17 +139,19 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
 
         svg.addEventListener('touchstart', onTouchStart, { passive: false });
+        svg.addEventListener('touchmove', onTouchMove, { passive: false });
         svg.addEventListener('pointerdown', onPointerDown, { passive: false });
 
         return () => {
             svg.removeEventListener('touchstart', onTouchStart);
+            svg.removeEventListener('touchmove', onTouchMove);
             svg.removeEventListener('pointerdown', onPointerDown);
         };
     }, [activeTool]); // Re-bind when tool changes
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (isDrawing) {
-            setDebugInfo(`Move: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
+            addLog(`Move: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
         }
 
         if (!isDrawing || activeTool !== 'pen') return;
@@ -156,8 +198,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     return (
         <div className="relative inline-block shadow-xl rounded-lg overflow-hidden bg-white mb-8">
             {/* Debug Overlay */}
-            <div className="fixed top-20 right-4 bg-black/80 text-white p-2 rounded text-xs z-50 pointer-events-none">
-                {debugInfo || 'Ready'}
+            <div className="fixed top-20 right-4 bg-black/80 text-white p-2 rounded text-xs z-50 pointer-events-none whitespace-pre-wrap">
+                {debugLog.join('\n') || 'Ready'}
             </div>
 
             <img

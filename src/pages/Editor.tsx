@@ -259,18 +259,7 @@ const Editor: React.FC = () => {
                 disabled={linkMode.active}
             />
 
-            {/* Link Mode Banner */}
-            {linkMode.active && (
-                <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 text-center z-50 shadow-lg flex justify-between items-center px-8">
-                    <span className="font-bold">Link Mode: Touch markers to link/unlink</span>
-                    <button
-                        onClick={handleExitLinkMode}
-                        className="bg-white text-blue-600 px-4 py-1 rounded-full text-sm font-bold"
-                    >
-                        Done
-                    </button>
-                </div>
-            )}
+
 
             {/* Zoom/Pan Container */}
             <div

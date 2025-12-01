@@ -320,39 +320,38 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 })}
 
                 {markers.map((marker, index) => {
-                    // Determine style
-                    let fillOpacity = 1.0;
+                    // Determine Parent/Child status
+                    const isLinked = !!marker.groupId;
+                    // Find the first marker with this groupId to identify it as "Parent"
+                    const parentIndex = isLinked ? markers.findIndex(m => m.groupId === marker.groupId) : -1;
+                    const isParent = isLinked && index === parentIndex;
+                    const isChild = isLinked && !isParent;
+
+                    // Default Styles (Pink, Opaque)
+                    let fill = "#FF69B4";
                     let stroke = "#C71585";
+                    let fillOpacity = 1.0;
                     let strokeDasharray = "none";
                     let animation = "none";
                     let filter = "url(#marker-shadow)";
 
-                    const isLinked = !!marker.groupId;
+                    // Apply Child Styles (Gray)
+                    if (isChild) {
+                        fill = "#808080";
+                        stroke = "#808080";
+                    }
 
+                    // Link Mode Overrides
                     if (linkMode?.active) {
                         fillOpacity = 0.3; // Dim everything in link mode
 
                         if (index === linkMode.parentMarkerIndex) {
-                            // Active Parent
+                            // Active Parent (Link Source)
+                            // User requested: Keep it Pink (already default)
                             strokeDasharray = "10, 5";
                             animation = "dash-rotate 1s linear infinite";
-                            fillOpacity = 0.3;
-                        } else if (isLinked) {
-                            // Linked (any group)
-                            // If in same group as parent, it's linked to THIS parent.
-                            const parent = markers[linkMode.parentMarkerIndex!];
-                            if (parent.groupId === marker.groupId) {
-                                stroke = "#808080"; // Gray
-                            }
                         }
-                    } else {
-                        // Normal Mode
-                        if (isLinked) {
-                            fillOpacity = 0.3; // Linked markers always semi-transparent? User said "link destination... gray inside".
-                            // "Link destination is gray inside".
-                            // "Even if link mode is canceled... gray display continues".
-                            stroke = "#808080"; // Gray border
-                        }
+                        // Other markers retain their base color (Pink or Gray) but are dimmed
                     }
 
                     return (
@@ -362,7 +361,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                             y={marker.y}
                             width={marker.width}
                             height={marker.height}
-                            fill="#FF69B4"
+                            fill={fill}
                             fillOpacity={fillOpacity}
                             stroke={stroke}
                             strokeWidth={10 * (1 / scale)}

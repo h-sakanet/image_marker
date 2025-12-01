@@ -103,8 +103,19 @@ const GlobalSettingsModal: React.FC<GlobalSettingsModalProps> = ({ onClose }) =>
                 throw new Error("Invalid backup data format.");
             }
 
-            // Prepare data OUTSIDE the transaction to avoid "Transaction committed too early"
+            // Prepare data OUTSIDE the transaction
             const imagesToRestore: ImageItem[] = [];
+
+            // Helper to convert Blob to Base64
+            const blobToBase64 = (blob: Blob): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            };
+
             for (const imgMeta of data.images) {
                 const imgFile = zip.file(`images/${imgMeta.id}.png`);
                 let blob: Blob | null = null;
@@ -114,9 +125,10 @@ const GlobalSettingsModal: React.FC<GlobalSettingsModalProps> = ({ onClose }) =>
                 }
 
                 if (blob) {
+                    const base64Data = await blobToBase64(blob);
                     imagesToRestore.push({
                         ...imgMeta,
-                        imageData: blob
+                        imageData: base64Data
                     });
                 }
             }

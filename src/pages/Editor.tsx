@@ -166,7 +166,7 @@ const Editor: React.FC = () => {
             {/* Zoom/Pan Container */}
             <div
                 ref={containerRef}
-                className="w-full h-full touch-none origin-top-left transition-transform duration-75 ease-linear"
+                className="w-full h-full touch-none origin-top-left will-change-transform"
                 style={{
                     transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
                 }}

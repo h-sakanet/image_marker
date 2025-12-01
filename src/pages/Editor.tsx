@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Loader2, ArrowUp, ArrowDown, X, Trash2 } from 'lucide-react';
+import { Loader2, X, Trash2 } from 'lucide-react';
 import { db, type ImageItem, type Marker } from '../db/db';
 import Toolbar, { type ToolType } from '../components/Toolbar';
 import ImageEditor from '../components/ImageEditor';
@@ -17,6 +17,7 @@ const Editor: React.FC = () => {
     const [activeTool, setActiveTool] = useState<ToolType>('pen');
     const [images, setImages] = useState<ImageItem[]>([]);
     const [confirmingDeleteImageId, setConfirmingDeleteImageId] = useState<number | null>(null);
+    const [moveMenuOpenId, setMoveMenuOpenId] = useState<number | null>(null);
 
     // Zoom & Pan State
     // Initial scale 0.5 to fit large images better on load (since we removed max-w-full)
@@ -175,18 +176,22 @@ const Editor: React.FC = () => {
     };
 
     // Image Management Handlers
-    const handleMoveImage = async (index: number, direction: 'up' | 'down') => {
-        if (direction === 'up' && index === 0) return;
-        if (direction === 'down' && index === images.length - 1) return;
+    const handleMoveImageTo = async (fromIndex: number, toIndex: number) => {
+        if (fromIndex === toIndex) return;
 
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-        const currentImage = images[index];
-        const targetImage = images[targetIndex];
+        const newImages = [...images];
+        const [movedImage] = newImages.splice(fromIndex, 1);
+        newImages.splice(toIndex, 0, movedImage);
 
+        // Update order in DB
         await db.transaction('rw', db.images, async () => {
-            await db.images.update(currentImage.id!, { order: targetImage.order });
-            await db.images.update(targetImage.id!, { order: currentImage.order });
+            const promises = newImages.map((img, index) => {
+                return db.images.update(img.id!, { order: index });
+            });
+            await Promise.all(promises);
         });
+
+        setMoveMenuOpenId(null);
     };
 
     const handleDeleteImage = (imageId: number) => {
@@ -197,6 +202,11 @@ const Editor: React.FC = () => {
         if (confirmingDeleteImageId === null) return;
         await db.images.delete(confirmingDeleteImageId);
         setConfirmingDeleteImageId(null);
+    };
+
+    // Helper to check for stylus input
+    const isStylus = (e: React.PointerEvent) => {
+        return e.pointerType === 'pen';
     };
 
     // Touch Handlers for Zoom/Pan
@@ -432,46 +442,72 @@ const Editor: React.FC = () => {
             >
                 <div className="p-20 flex flex-col items-center gap-4 min-h-screen">
                     {images.map((image, index) => (
-                        <div key={image.id} className="flex items-start gap-4 w-full max-w-5xl">
-                            <div className="flex-1">
-                                <ImageEditor
-                                    imageId={image.id!}
-                                    imageData={image.imageData}
-                                    markers={image.markers}
-                                    activeTool={activeTool}
-                                    onAddMarker={(marker) => handleAddMarker(image.id!, marker)}
-                                    onRemoveMarker={(index) => handleRemoveMarker(image.id!, index)}
-                                    scale={transform.scale}
-                                    linkMode={linkMode.imageId === image.id ? linkMode : undefined}
-                                    onEnterLinkMode={(index) => handleEnterLinkMode(image.id!, index)}
-                                    onLinkMarker={(index) => handleLinkMarker(image.id!, index)}
-                                />
-                            </div>
-                            {/* Image Controls */}
-                            <div className="flex flex-col gap-2 pt-4 pointer-events-auto">
-                                <button
-                                    onClick={() => handleMoveImage(index, 'up')}
-                                    disabled={index === 0}
-                                    className={`p-2 rounded-full shadow-sm transition-all ${index === 0 ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-600 active:scale-95'}`}
-                                    title="上へ移動"
+                        <div key={image.id} className="relative w-full max-w-5xl">
+                            <ImageEditor
+                                imageId={image.id!}
+                                imageData={image.imageData}
+                                markers={image.markers}
+                                activeTool={activeTool}
+                                onAddMarker={(marker) => handleAddMarker(image.id!, marker)}
+                                onRemoveMarker={(index) => handleRemoveMarker(image.id!, index)}
+                                scale={transform.scale}
+                                linkMode={linkMode.imageId === image.id ? linkMode : undefined}
+                                onEnterLinkMode={(index) => handleEnterLinkMode(image.id!, index)}
+                                onLinkMarker={(index) => handleLinkMarker(image.id!, index)}
+                            />
+
+                            {/* Stylus-Only Controls */}
+                            <div className="absolute inset-0 pointer-events-none">
+                                {/* Delete Button (Top Right) */}
+                                <div
+                                    className="absolute top-2 right-2 pointer-events-auto"
+                                    onPointerUp={(e) => {
+                                        if (isStylus(e)) {
+                                            handleDeleteImage(image.id!);
+                                        }
+                                    }}
                                 >
-                                    <ArrowUp size={24} />
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteImage(image.id!)}
-                                    className="p-2 rounded-full bg-white text-gray-600 hover:bg-red-50 hover:text-red-600 shadow-sm transition-all active:scale-95"
-                                    title="画像を削除"
-                                >
-                                    <X size={24} />
-                                </button>
-                                <button
-                                    onClick={() => handleMoveImage(index, 'down')}
-                                    disabled={index === images.length - 1}
-                                    className={`p-2 rounded-full shadow-sm transition-all ${index === images.length - 1 ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-600 active:scale-95'}`}
-                                    title="下へ移動"
-                                >
-                                    <ArrowDown size={24} />
-                                </button>
+                                    <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shadow-lg text-white opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                        <X size={24} />
+                                    </div>
+                                </div>
+
+                                {/* Page Number & Move Menu (Top Left) */}
+                                <div className="absolute top-2 left-2 flex items-center gap-2 pointer-events-auto">
+                                    {/* Page Number Button */}
+                                    <div
+                                        className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center shadow-lg text-white font-bold text-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+                                        onPointerUp={(e) => {
+                                            if (isStylus(e)) {
+                                                setMoveMenuOpenId(moveMenuOpenId === image.id ? null : image.id!);
+                                            }
+                                        }}
+                                    >
+                                        {index + 1}
+                                    </div>
+
+                                    {/* Move Menu */}
+                                    {moveMenuOpenId === image.id && (
+                                        <div className="flex gap-2 overflow-x-auto max-w-[300px] bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-xl scrollbar-hide">
+                                            {images.map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-bold text-sm cursor-pointer transition-colors ${i === index
+                                                        ? 'bg-primary-600 text-white'
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-600'
+                                                        }`}
+                                                    onPointerUp={(e) => {
+                                                        if (isStylus(e)) {
+                                                            handleMoveImageTo(index, i);
+                                                        }
+                                                    }}
+                                                >
+                                                    {i + 1}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}

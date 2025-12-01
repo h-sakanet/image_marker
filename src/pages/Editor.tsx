@@ -425,8 +425,8 @@ const Editor: React.FC = () => {
                                 onClick={executeDeleteImage}
                                 disabled={images.length <= 1}
                                 className={`flex-1 py-3 px-4 rounded-xl text-white font-medium shadow-lg shadow-red-500/30 transition-all ${images.length <= 1
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-red-600 hover:bg-red-700'
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-red-600 hover:bg-red-700'
                                     }`}
                             >
                                 削除する
@@ -449,7 +449,7 @@ const Editor: React.FC = () => {
             >
                 <div className="p-20 flex flex-col items-center gap-4 min-h-screen">
                     {images.map((image, index) => (
-                        <div key={image.id} className="relative w-full max-w-5xl">
+                        <div key={image.id} className="relative w-fit">
                             <ImageEditor
                                 imageId={image.id!}
                                 imageData={image.imageData}
@@ -467,7 +467,8 @@ const Editor: React.FC = () => {
                             <div className="absolute inset-0 pointer-events-none">
                                 {/* Gear Icon (Top Right) */}
                                 <div
-                                    className="absolute top-2 right-2 pointer-events-auto"
+                                    className="absolute top-2 right-2 pointer-events-auto origin-top-right"
+                                    style={{ transform: `scale(${1 / transform.scale})` }}
                                     onPointerUp={(e) => {
                                         if (isStylus(e)) {
                                             setSettingsMenuOpenId(settingsMenuOpenId === image.id ? null : image.id!);
@@ -481,7 +482,10 @@ const Editor: React.FC = () => {
 
                                 {/* Settings Menu */}
                                 {settingsMenuOpenId === image.id && (
-                                    <div className="absolute top-14 right-2 bg-white rounded-xl shadow-xl p-4 w-64 pointer-events-auto z-50 animate-fade-in border border-gray-100">
+                                    <div
+                                        className="absolute top-14 right-2 bg-white rounded-xl shadow-xl p-4 w-64 pointer-events-auto z-50 animate-fade-in border border-gray-100 origin-top-right"
+                                        style={{ transform: `scale(${2 / transform.scale})` }}
+                                    >
                                         {/* Page Reordering */}
                                         <div className="mb-4">
                                             <div className="text-sm font-bold text-gray-700 mb-2">ページ変更</div>
@@ -509,8 +513,8 @@ const Editor: React.FC = () => {
                                             onClick={() => handleDeleteImage(image.id!)}
                                             disabled={images.length <= 1}
                                             className={`w-full flex items-center p-2 rounded-lg transition-colors ${images.length <= 1
-                                                    ? 'text-gray-400 cursor-not-allowed'
-                                                    : 'text-red-600 hover:bg-red-50'
+                                                ? 'text-gray-400 cursor-not-allowed'
+                                                : 'text-red-600 hover:bg-red-50'
                                                 }`}
                                         >
                                             <Trash2 size={18} className="mr-2" />

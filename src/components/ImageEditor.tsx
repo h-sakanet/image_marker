@@ -23,17 +23,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     const [isDrawing, setIsDrawing] = useState(false);
     const [startPos, setStartPos] = useState<{ x: number, y: number } | null>(null);
     const [currentPos, setCurrentPos] = useState<{ x: number, y: number } | null>(null);
-    const [debugLog, setDebugLog] = useState<string[]>([]);
-
-    const addLog = (msg: string) => setDebugLog(prev => [msg, ...prev].slice(0, 5));
 
     const svgRef = useRef<SVGSVGElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
         if (imageData instanceof Blob) {
-            const url = URL.createObjectURL(imageData);
-            setImageUrl(url);
             const reader = new FileReader();
             reader.onload = (e) => {
                 if (e.target?.result) {
@@ -41,12 +36,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 }
             };
             reader.onerror = (e) => {
-                addLog(`ReadErr: ${e.target?.error?.message}`);
+                console.error("Blob read error:", e.target?.error?.message);
             };
             try {
                 reader.readAsDataURL(imageData);
             } catch (e) {
-                addLog(`BlobErr: ${e}`);
+                console.error("Blob processing error:", e);
             }
         } else {
             setImageUrl(imageData as string);
@@ -79,7 +74,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 }
             }
 
-            addLog(`TS: ${types.join(',')}`);
 
             if (hasStylus) {
                 e.preventDefault(); // Critical: Stop iOS scroll
@@ -103,7 +97,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
 
         const onPointerDown = (e: PointerEvent) => {
-            addLog(`Down: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
 
             // Allow touch to scroll
             if (e.pointerType === 'touch') return;
@@ -116,9 +109,14 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 const CTM = svg.getScreenCTM();
                 if (!CTM) return;
 
+                const pt = svg.createSVGPoint();
+                pt.x = e.clientX;
+                pt.y = e.clientY;
+                const svgP = pt.matrixTransform(CTM.inverse());
+
                 const pos = {
-                    x: (e.clientX - CTM.e) / CTM.a,
-                    y: (e.clientY - CTM.f) / CTM.d
+                    x: svgP.x,
+                    y: svgP.y
                 };
 
                 isDrawingRef.current = true;
@@ -143,14 +141,18 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             const CTM = svg.getScreenCTM();
             if (!CTM) return;
 
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgP = pt.matrixTransform(CTM.inverse());
+
             const pos = {
-                x: (e.clientX - CTM.e) / CTM.a,
-                y: (e.clientY - CTM.f) / CTM.d
+                x: svgP.x,
+                y: svgP.y
             };
 
             currentPosRef.current = pos;
             setCurrentPos(pos);
-            addLog(`Move: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
         };
 
         const onPointerUp = (e: PointerEvent) => {
@@ -212,10 +214,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     return (
         <div className="relative inline-block shadow-xl rounded-lg overflow-hidden bg-white mb-8">
-            {/* Debug Overlay */}
-            <div className="fixed top-20 right-4 bg-black/80 text-white p-2 rounded text-xs z-50 pointer-events-none whitespace-pre-wrap">
-                {debugLog.join('\n') || 'Ready'}
-            </div>
 
             <img
                 ref={imgRef}

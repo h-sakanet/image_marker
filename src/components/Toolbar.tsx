@@ -32,12 +32,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 <House size={24} />
             </button>
 
-            <div className="h-px bg-gray-300 w-8 mx-auto my-2" />
-
             {onFitScreen && (
                 <button
                     onClick={onFitScreen}
-                    className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12 mb-2"
+                    className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12"
                     title="画面に合わせる"
                 >
                     <Maximize size={24} />

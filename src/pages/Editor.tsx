@@ -239,22 +239,24 @@ const Editor: React.FC = () => {
                 touch1.clientY - touch2.clientY
             );
 
-            const scaleFactor = dist / lastDistRef.current;
-            const newScale = Math.min(Math.max(transform.scale * scaleFactor, 0.1), 5);
+            setTransform(prev => {
+                const scaleFactor = dist / lastDistRef.current!;
+                const newScale = Math.min(Math.max(prev.scale * scaleFactor, 0.1), 5);
 
-            // Calculate center of pinch
-            const cx = (touch1.clientX + touch2.clientX) / 2;
-            const cy = (touch1.clientY + touch2.clientY) / 2;
+                // Calculate center of pinch
+                const cx = (touch1.clientX + touch2.clientX) / 2;
+                const cy = (touch1.clientY + touch2.clientY) / 2;
 
-            // Adjust translation to zoom towards center
-            // newTx = cx - (cx - oldTx) * (newScale / oldScale)
-            const actualScaleFactor = newScale / transform.scale;
+                // Adjust translation to zoom towards center
+                // newTx = cx - (cx - oldTx) * (newScale / oldScale)
+                const actualScaleFactor = newScale / prev.scale;
 
-            setTransform(prev => ({
-                scale: newScale,
-                x: cx - (cx - prev.x) * actualScaleFactor,
-                y: cy - (cy - prev.y) * actualScaleFactor
-            }));
+                return {
+                    scale: newScale,
+                    x: cx - (cx - prev.x) * actualScaleFactor,
+                    y: cy - (cy - prev.y) * actualScaleFactor
+                };
+            });
 
             lastDistRef.current = dist;
         }

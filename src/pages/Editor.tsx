@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Loader2, X, Trash2 } from 'lucide-react';
+import { Loader2, X, Trash2, Settings } from 'lucide-react';
 import { db, type ImageItem, type Marker } from '../db/db';
 import Toolbar, { type ToolType } from '../components/Toolbar';
 import ImageEditor from '../components/ImageEditor';
@@ -17,7 +17,7 @@ const Editor: React.FC = () => {
     const [activeTool, setActiveTool] = useState<ToolType>('pen');
     const [images, setImages] = useState<ImageItem[]>([]);
     const [confirmingDeleteImageId, setConfirmingDeleteImageId] = useState<number | null>(null);
-    const [moveMenuOpenId, setMoveMenuOpenId] = useState<number | null>(null);
+    const [settingsMenuOpenId, setSettingsMenuOpenId] = useState<number | null>(null);
 
     // Zoom & Pan State
     // Initial scale 0.5 to fit large images better on load (since we removed max-w-full)
@@ -191,11 +191,12 @@ const Editor: React.FC = () => {
             await Promise.all(promises);
         });
 
-        setMoveMenuOpenId(null);
+        setSettingsMenuOpenId(null);
     };
 
     const handleDeleteImage = (imageId: number) => {
         setConfirmingDeleteImageId(imageId);
+        setSettingsMenuOpenId(null);
     };
 
     const executeDeleteImage = async () => {
@@ -458,56 +459,55 @@ const Editor: React.FC = () => {
 
                             {/* Stylus-Only Controls */}
                             <div className="absolute inset-0 pointer-events-none">
-                                {/* Delete Button (Top Right) */}
+                                {/* Gear Icon (Top Right) */}
                                 <div
                                     className="absolute top-2 right-2 pointer-events-auto"
                                     onPointerUp={(e) => {
                                         if (isStylus(e)) {
-                                            handleDeleteImage(image.id!);
+                                            setSettingsMenuOpenId(settingsMenuOpenId === image.id ? null : image.id!);
                                         }
                                     }}
                                 >
-                                    <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shadow-lg text-white opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                                        <X size={24} />
+                                    <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center shadow-lg text-white opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                                        <Settings size={24} />
                                     </div>
                                 </div>
 
-                                {/* Page Number & Move Menu (Top Left) */}
-                                <div className="absolute top-2 left-2 flex items-center gap-2 pointer-events-auto">
-                                    {/* Page Number Button */}
-                                    <div
-                                        className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center shadow-lg text-white font-bold text-lg opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
-                                        onPointerUp={(e) => {
-                                            if (isStylus(e)) {
-                                                setMoveMenuOpenId(moveMenuOpenId === image.id ? null : image.id!);
-                                            }
-                                        }}
-                                    >
-                                        {index + 1}
-                                    </div>
-
-                                    {/* Move Menu */}
-                                    {moveMenuOpenId === image.id && (
-                                        <div className="flex gap-2 overflow-x-auto max-w-[300px] bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-xl scrollbar-hide">
-                                            {images.map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-bold text-sm cursor-pointer transition-colors ${i === index
-                                                        ? 'bg-primary-600 text-white'
-                                                        : 'bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-600'
-                                                        }`}
-                                                    onPointerUp={(e) => {
-                                                        if (isStylus(e)) {
-                                                            handleMoveImageTo(index, i);
-                                                        }
-                                                    }}
-                                                >
-                                                    {i + 1}
-                                                </div>
-                                            ))}
+                                {/* Settings Menu */}
+                                {settingsMenuOpenId === image.id && (
+                                    <div className="absolute top-14 right-2 bg-white rounded-xl shadow-xl p-4 w-64 pointer-events-auto z-50 animate-fade-in border border-gray-100">
+                                        {/* Page Reordering */}
+                                        <div className="mb-4">
+                                            <div className="text-sm font-bold text-gray-700 mb-2">ページ変更</div>
+                                            <div className="grid grid-cols-5 gap-2">
+                                                {images.map((_, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`aspect-square rounded-full flex items-center justify-center font-bold text-sm cursor-pointer transition-colors ${i === index
+                                                            ? 'bg-primary-600 text-white'
+                                                            : 'bg-gray-100 text-gray-600 hover:bg-primary-100 hover:text-primary-600'
+                                                            }`}
+                                                        onClick={() => handleMoveImageTo(index, i)}
+                                                    >
+                                                        {i + 1}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
+
+                                        {/* Divider */}
+                                        <div className="border-t border-gray-100 my-2" />
+
+                                        {/* Delete Button */}
+                                        <button
+                                            onClick={() => handleDeleteImage(image.id!)}
+                                            className="w-full flex items-center text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 size={18} className="mr-2" />
+                                            <span className="text-sm font-medium">この画像を削除する</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

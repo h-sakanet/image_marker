@@ -40,11 +40,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     const startPosRef = useRef<{ x: number, y: number } | null>(null);
     const currentPosRef = useRef<{ x: number, y: number } | null>(null);
 
-    // Long press detection
-    const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const isLongPressRef = useRef(false);
-    const pointerDownPosRef = useRef<{ x: number, y: number } | null>(null);
-
     useEffect(() => {
         if (imageData instanceof Blob) {
             const reader = new FileReader();
@@ -220,31 +215,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 // In link mode, tap to link
                 onLinkMarker?.(index);
             } else {
-                // Start Long Press Timer
-                isLongPressRef.current = false;
-                pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
-
-                longPressTimerRef.current = setTimeout(() => {
-                    isLongPressRef.current = true;
-                    onEnterLinkMode?.(index);
-                }, 500);
-            }
-        }
-    };
-
-    const handleMarkerPointerUp = () => {
-        if (longPressTimerRef.current) {
-            clearTimeout(longPressTimerRef.current);
-            longPressTimerRef.current = null;
-        }
-    };
-
-    const handleMarkerPointerMove = (e: React.PointerEvent) => {
-        if (longPressTimerRef.current && pointerDownPosRef.current) {
-            const dist = Math.hypot(e.clientX - pointerDownPosRef.current.x, e.clientY - pointerDownPosRef.current.y);
-            if (dist > 10) { // If pointer moves more than 10 pixels, cancel long press
-                clearTimeout(longPressTimerRef.current);
-                longPressTimerRef.current = null;
+                // Tap to Enter Link Mode immediately (User Request)
+                onEnterLinkMode?.(index);
             }
         }
     };
@@ -362,9 +334,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                 animation: animation
                             }}
                             onPointerDown={(e) => handleMarkerPointerDown(e, index)}
-                            onPointerUp={handleMarkerPointerUp}
-                            onPointerMove={handleMarkerPointerMove}
-                            onPointerCancel={handleMarkerPointerUp}
                         />
                     );
                 })}

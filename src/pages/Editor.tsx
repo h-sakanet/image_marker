@@ -96,12 +96,17 @@ const Editor: React.FC = () => {
 
         const marker = image.markers[markerIndex];
 
-        // Exclusive Rule: If marker is already part of a group (has groupId), it cannot become a Parent.
-        // It can only be unlinked by selecting the existing Parent (if we knew who it was) or by using Eraser.
-        // For now, just prevent entering Link Mode on an already linked marker.
+        // Exclusive Rule: 
+        // If marker is already part of a group:
+        // - If it's the Parent (first in group), allow re-entering Link Mode to add/remove children.
+        // - If it's a Child, prevent entering (cannot become a Parent of another group).
         if (marker.groupId) {
-            // Optional: Notify user? "This marker is already linked."
-            return;
+            const firstIndex = image.markers.findIndex(m => m.groupId === marker.groupId);
+            if (firstIndex !== markerIndex) {
+                // It's a child -> Prevent
+                return;
+            }
+            // It's a parent -> Allow re-entry
         }
 
         setLinkMode({

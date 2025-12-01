@@ -288,37 +288,29 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                     // User said "dashed line connecting them to the parent".
                     // We need to know who is parent. 
                     // In Link Mode we know `linkMode.parentMarkerIndex`.
-                    // Outside Link Mode, we don't know who was "parent".
-                    // BUT, for a group, maybe it doesn't matter visually? 
-                    // Or maybe we should just connect them all to the first one in the group?
 
-                    // Let's find the "first" marker in this group (by index) and treat it as parent for visual purposes.
-                    const groupMarkers = markers
-                        .map((m, i) => ({ ...m, index: i }))
-                        .filter(m => m.groupId === marker.groupId);
+                    // Find parent
+                    const parentIndex = markers.findIndex(m => m.groupId === marker.groupId);
+                    if (parentIndex === -1 || parentIndex === index) return null; // No parent or is parent
 
-                    if (groupMarkers.length < 2) return null;
-
-                    const parent = groupMarkers[0]; // First one is "parent" visually
-                    if (index === parent.index) return null; // Don't draw line to self
-
-                    const pCenter = getCenter(parent);
-                    const mCenter = getCenter(marker);
+                    const parent = markers[parentIndex];
+                    const start = getCenter(parent);
+                    const end = getCenter(marker);
 
                     return (
                         <line
                             key={`line-${index}`}
-                            x1={pCenter.x}
-                            y1={pCenter.y}
-                            x2={mCenter.x}
-                            y2={mCenter.y}
-                            stroke="#C71585"
-                            strokeWidth={4 * (1 / scale)}
-                            strokeDasharray="8,8"
+                            x1={start.x}
+                            y1={start.y}
+                            x2={end.x}
+                            y2={end.y}
+                            stroke="#808080"
+                            strokeWidth={2 * (1 / scale)}
+                            strokeDasharray="5,5"
+                            pointerEvents="none"
                         />
                     );
                 })}
-
                 {markers.map((marker, index) => {
                     // Determine Parent/Child status
                     const isLinked = !!marker.groupId;

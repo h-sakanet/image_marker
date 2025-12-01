@@ -106,17 +106,16 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 e.stopPropagation();
                 (e.target as Element).setPointerCapture(e.pointerId);
 
-                const CTM = svg.getScreenCTM();
-                if (!CTM) return;
+                const rect = svg.getBoundingClientRect();
+                const img = imgRef.current;
+                if (!img) return;
 
-                const pt = svg.createSVGPoint();
-                pt.x = e.clientX;
-                pt.y = e.clientY;
-                const svgP = pt.matrixTransform(CTM.inverse());
+                const scaleX = img.naturalWidth / rect.width;
+                const scaleY = img.naturalHeight / rect.height;
 
                 const pos = {
-                    x: svgP.x,
-                    y: svgP.y
+                    x: (e.clientX - rect.left) * scaleX,
+                    y: (e.clientY - rect.top) * scaleY
                 };
 
                 isDrawingRef.current = true;
@@ -138,17 +137,16 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             e.preventDefault();
             e.stopPropagation();
 
-            const CTM = svg.getScreenCTM();
-            if (!CTM) return;
+            const rect = svg.getBoundingClientRect();
+            const img = imgRef.current;
+            if (!img) return;
 
-            const pt = svg.createSVGPoint();
-            pt.x = e.clientX;
-            pt.y = e.clientY;
-            const svgP = pt.matrixTransform(CTM.inverse());
+            const scaleX = img.naturalWidth / rect.width;
+            const scaleY = img.naturalHeight / rect.height;
 
             const pos = {
-                x: svgP.x,
-                y: svgP.y
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
             };
 
             currentPosRef.current = pos;

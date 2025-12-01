@@ -337,8 +337,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
                     // Apply Child Styles (Gray)
                     if (isChild) {
-                        fill = "#808080";
-                        stroke = "#808080";
+                        fill = "#DDDDDD"; // Light Gray
+                        stroke = "#555555"; // Dark Gray
                     }
 
                     // Link Mode Overrides
@@ -364,7 +364,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                             fill={fill}
                             fillOpacity={fillOpacity}
                             stroke={stroke}
-                            strokeWidth={10 * (1 / scale)}
+                            strokeWidth={3 * (1 / scale)}
                             strokeDasharray={strokeDasharray}
                             filter={filter}
                             style={{
@@ -384,7 +384,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                         height={Math.abs(currentPos.y - startPos.y)}
                         fill="none"
                         stroke="#C71585"
-                        strokeWidth={10 * (1 / scale)}
+                        strokeWidth={3 * (1 / scale)}
                         strokeDasharray="4"
                     />
                 )}

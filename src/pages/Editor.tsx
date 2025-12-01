@@ -248,6 +248,54 @@ const Editor: React.FC = () => {
         lastDistRef.current = null;
     };
 
+    const handleFitScreen = () => {
+        // Try to find the first image to calculate fit scale
+        const firstImg = document.querySelector('img');
+        if (firstImg && firstImg.naturalWidth > 0) {
+            const padding = 40; // Horizontal padding
+            const availableWidth = window.innerWidth - padding;
+            const scale = Math.min(availableWidth / firstImg.naturalWidth, 1); // Don't zoom in more than 100% by default? Or allow it? User said "fit to screen".
+            // Actually, if image is small, we might want to center it at 1.0.
+            // If image is huge, scale down.
+            // Let's just fit width.
+            const fitScale = availableWidth / firstImg.naturalWidth;
+
+            // Center horizontally
+            // The transform origin is 0,0? No, CSS transform origin is usually center?
+            // Our custom transform logic applies translation then scale?
+            // `transform: translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`
+            // If we want to center:
+            // Content Width = naturalWidth * scale
+            // Screen Width = window.innerWidth
+            // x = (Screen Width - Content Width) / 2
+
+            const contentWidth = firstImg.naturalWidth * fitScale;
+            const x = (window.innerWidth - contentWidth) / 2;
+
+            setTransform({
+                scale: fitScale,
+                x: x,
+                y: 100 // Top padding
+            });
+        } else {
+            // Fallback if no image found yet
+            setTransform({ scale: 0.5, x: 0, y: 0 });
+        }
+    };
+
+    // Initial Fit
+    const hasInitialFit = useRef(false);
+    useEffect(() => {
+        if (images.length > 0 && !hasInitialFit.current) {
+            // Wait for image to render and load
+            const timer = setTimeout(() => {
+                handleFitScreen();
+                hasInitialFit.current = true;
+            }, 100); // 100ms delay
+            return () => clearTimeout(timer);
+        }
+    }, [images]);
+
     return (
         <div className="h-screen w-screen overflow-hidden bg-gray-100 relative">
             <Toolbar
@@ -257,6 +305,7 @@ const Editor: React.FC = () => {
                 canUndo={history.length > 0}
                 onBack={() => navigate('/')}
                 disabled={linkMode.active}
+                onFitScreen={handleFitScreen}
             />
 
 

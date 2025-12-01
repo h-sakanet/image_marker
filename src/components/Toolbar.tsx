@@ -1,5 +1,5 @@
 import React from 'react';
-import { House, Pen, Eraser, Undo2 } from 'lucide-react';
+import { House, Pen, Eraser, Undo2, Maximize } from 'lucide-react';
 
 export type ToolType = 'pen' | 'eraser';
 
@@ -10,6 +10,7 @@ interface ToolbarProps {
     canUndo: boolean;
     onBack: () => void;
     disabled?: boolean;
+    onFitScreen?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -18,24 +19,35 @@ const Toolbar: React.FC<ToolbarProps> = ({
     onUndo,
     canUndo,
     onBack,
-    disabled
+    disabled,
+    onFitScreen
 }) => {
     return (
-        <div className={`fixed left-6 top-1/2 -translate-y-1/2 flex flex-col gap-4 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/50 z-40 transition-opacity duration-200 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`fixed left-6 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-40 transition-opacity duration-200 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
             <button
                 onClick={onBack}
                 className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12"
-                title="Back to Home"
+                title="ホームに戻る"
             >
                 <House size={24} />
             </button>
 
-            <div className="h-4" /> {/* Spacer */}
+            <div className="h-px bg-gray-300 w-8 mx-auto my-2" />
+
+            {onFitScreen && (
+                <button
+                    onClick={onFitScreen}
+                    className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12 mb-2"
+                    title="画面に合わせる"
+                >
+                    <Maximize size={24} />
+                </button>
+            )}
 
             <button
                 onClick={() => onToolChange('pen')}
-                className={`pointer-events-auto p-3 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center w-12 h-12 ${activeTool === 'pen' ? 'bg-primary-600 text-white ring-2 ring-primary-200' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
-                title="Pen Tool"
+                className={`pointer-events-auto p-3 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center w-12 h-12 ${activeTool === 'pen' ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                title="ペン"
             >
                 <Pen size={24} />
             </button>

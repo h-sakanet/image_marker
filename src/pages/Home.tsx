@@ -6,7 +6,51 @@ import { db, type Deck } from '../db/db';
 import GlobalSettingsModal from '../components/GlobalSettingsModal';
 
 const Home: React.FC = () => {
-    // ... existing code ...
+    const decks = useLiveQuery(async () => {
+        const allDecks = await db.decks.orderBy('createdAt').reverse().toArray();
+        const decksWithImages = await Promise.all(allDecks.map(async (deck) => {
+            const images = await db.images.where('deckId').equals(deck.id!).sortBy('order');
+
+            // Calculate marker stats
+            let totalMarkers = 0;
+            let lockedMarkers = 0;
+
+            images.forEach(img => {
+                img.markers.forEach(m => {
+                    if (m.groupId) {
+                        // Group logic handled below
+                    } else {
+                        totalMarkers++;
+                        if (m.isLocked) lockedMarkers++;
+                    }
+                });
+
+                // Handle groups separately to count 1 per group
+                const groups = new Set<string>();
+                const lockedGroups = new Set<string>();
+
+                img.markers.forEach(m => {
+                    if (m.groupId) {
+                        groups.add(m.groupId);
+                        if (m.isLocked) {
+                            lockedGroups.add(m.groupId);
+                        }
+                    }
+                });
+
+                totalMarkers += groups.size;
+                lockedMarkers += lockedGroups.size;
+            });
+
+            return {
+                ...deck,
+                image: images[0]?.imageData,
+                totalMarkers,
+                lockedMarkers
+            };
+        }));
+        return decksWithImages;
+    });
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [editingDeck, setEditingDeck] = useState<Deck | null>(null);

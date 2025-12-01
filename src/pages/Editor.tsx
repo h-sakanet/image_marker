@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Loader2, Trash2, Settings } from 'lucide-react';
 import { db, type ImageItem, type Marker } from '../db/db';
@@ -382,16 +382,25 @@ const Editor: React.FC = () => {
 
     // Initial Fit
     const hasInitialFit = useRef(false);
+    const location = useLocation();
+
     useEffect(() => {
         if (images.length > 0 && !hasInitialFit.current) {
-            // Wait for image to render and load
-            const timer = setTimeout(() => {
-                handleFitScreen();
+            // Check if transform is passed from Player
+            const state = location.state as { transform?: { scale: number, x: number, y: number } };
+            if (state?.transform) {
+                setTransform(state.transform);
                 hasInitialFit.current = true;
-            }, 100); // 100ms delay
-            return () => clearTimeout(timer);
+            } else {
+                // Wait for image to render and load
+                const timer = setTimeout(() => {
+                    handleFitScreen();
+                    hasInitialFit.current = true;
+                }, 100); // 100ms delay
+                return () => clearTimeout(timer);
+            }
         }
-    }, [images]);
+    }, [images, location.state]);
 
     return (
         <div className="h-screen w-screen overflow-hidden bg-gray-100 relative">

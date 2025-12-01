@@ -5,21 +5,19 @@ interface ImagePlayerProps {
     imageId: number;
     imageData: Blob | string;
     markers: Marker[];
-    onMarkerUpdate: () => void; // Callback to refresh parent state if needed
+    transparentMarkers: Set<number>;
+    onMarkerTap: (index: number) => void;
 }
 
 const ImagePlayer: React.FC<ImagePlayerProps> = ({
     imageId,
     imageData,
     markers,
-    onMarkerUpdate
+    transparentMarkers,
+    onMarkerTap
 }) => {
     const [imageUrl, setImageUrl] = useState<string>('');
     const [isImageLoaded, setIsImageLoaded] = useState(false);
-
-    // Local state for ephemeral transparency
-    // Key: marker index, Value: true if transparent
-    const [transparentMarkers, setTransparentMarkers] = useState<Set<number>>(new Set());
 
     const imgRef = useRef<HTMLImageElement>(null);
 
@@ -47,63 +45,8 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({
         y: marker.y + marker.height / 2
     });
 
-    const handleMarkerTap = async (index: number) => {
-        const marker = markers[index];
-        const isLinked = !!marker.groupId;
-
-        // Find all indices in this group (including self)
-        const groupIndices = isLinked
-            ? markers.map((m, i) => m.groupId === marker.groupId ? i : -1).filter(i => i !== -1)
-            : [index];
-
-        // Determine current state
-        // State 1: Default (Opaque) -> !isLocked && !transparent
-        // State 2: Transparent -> !isLocked && transparent
-        // State 3: Locked -> isLocked
-
-        // Check the state of the *target* marker (or the group leader)
-        // Since they sync, checking one is enough.
-        const isLocked = marker.isLocked;
-        const isTransparent = transparentMarkers.has(index);
-
-        if (!isLocked && !isTransparent) {
-            // State 1 -> State 2 (Transparent)
-            const newSet = new Set(transparentMarkers);
-            groupIndices.forEach(i => newSet.add(i));
-            setTransparentMarkers(newSet);
-        } else if (!isLocked && isTransparent) {
-            // State 2 -> State 3 (Locked)
-            // Update DB
-            await db.transaction('rw', db.images, async () => {
-                const image = await db.images.get(imageId);
-                if (image) {
-                    const newMarkers = [...image.markers];
-                    groupIndices.forEach(i => {
-                        if (newMarkers[i]) newMarkers[i].isLocked = true;
-                    });
-                    await db.images.update(imageId, { markers: newMarkers });
-                }
-            });
-            // Clear transparency (it's now locked)
-            const newSet = new Set(transparentMarkers);
-            groupIndices.forEach(i => newSet.delete(i));
-            setTransparentMarkers(newSet);
-            onMarkerUpdate();
-        } else if (isLocked) {
-            // State 3 -> State 1 (Default)
-            // Update DB
-            await db.transaction('rw', db.images, async () => {
-                const image = await db.images.get(imageId);
-                if (image) {
-                    const newMarkers = [...image.markers];
-                    groupIndices.forEach(i => {
-                        if (newMarkers[i]) newMarkers[i].isLocked = false;
-                    });
-                    await db.images.update(imageId, { markers: newMarkers });
-                }
-            });
-            onMarkerUpdate();
-        }
+    const handleMarkerTap = (index: number) => {
+        onMarkerTap(index);
     };
 
     return (
@@ -228,7 +171,7 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({
                                 // Stylus check
                                 if (e.pointerType === 'pen') {
                                     e.stopPropagation();
-                                    handleMarkerTap(index);
+                                    onMarkerTap(index);
                                 }
                             }}
                         />

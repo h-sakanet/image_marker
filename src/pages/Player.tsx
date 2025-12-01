@@ -190,19 +190,29 @@ const Player: React.FC = () => {
     // Flatten all markers for navigation
     // We only want "Parent" markers (no groupId or first of group)
     // Sort by distance from top-left (0,0) of the image
+    // Skip Locked and Transparent markers
     const getAllNavigableMarkers = () => {
         const navMarkers: { imageIndex: number, markerIndex: number }[] = [];
 
         images.forEach((img, imgIdx) => {
             // 1. Collect valid markers for this image
             const imgMarkers: { markerIndex: number, marker: any }[] = [];
+            const currentTransparentSet = transparentMarkers[img.id!] || new Set();
 
             img.markers.forEach((m, mIdx) => {
                 let isNavigable = true;
+
+                // Skip if child
                 if (m.groupId) {
                     const parentIdx = img.markers.findIndex(gm => gm.groupId === m.groupId);
-                    if (parentIdx !== mIdx) isNavigable = false; // It's a child
+                    if (parentIdx !== mIdx) isNavigable = false;
                 }
+
+                // Skip if Locked
+                if (m.isLocked) isNavigable = false;
+
+                // Skip if Transparent
+                if (currentTransparentSet.has(mIdx)) isNavigable = false;
 
                 if (isNavigable) {
                     imgMarkers.push({ markerIndex: mIdx, marker: m });
@@ -242,7 +252,17 @@ const Player: React.FC = () => {
         const navMarkers = getAllNavigableMarkers();
         if (navMarkers.length === 0) return;
 
-        const nextIndex = currentNavIndex + 1;
+        // Find current marker in the new list if possible, or just go to next index
+        // Since list changes dynamically (as markers become transparent/locked), 
+        // simple index increment might skip or repeat if list shrinks.
+        // But for simplicity, let's just find the *next* available marker after the current one?
+        // Or just reset index?
+        // Let's stick to simple index for now, but reset if out of bounds.
+
+        let nextIndex = currentNavIndex + 1;
+        if (nextIndex >= navMarkers.length) nextIndex = 0; // Loop or stop? User said "Move Down" -> Next.
+        // If we want to loop, set to 0. If stop, check length.
+        // Let's stop at end.
         if (nextIndex < navMarkers.length) {
             setCurrentNavIndex(nextIndex);
             const target = navMarkers[nextIndex];
@@ -254,8 +274,10 @@ const Player: React.FC = () => {
         const navMarkers = getAllNavigableMarkers();
         if (navMarkers.length === 0) return;
 
-        const prevIndex = currentNavIndex - 1;
-        if (prevIndex >= 0) {
+        let prevIndex = currentNavIndex - 1;
+        if (prevIndex < 0) prevIndex = 0; // Stop at start
+
+        if (prevIndex >= 0 && prevIndex < navMarkers.length) {
             setCurrentNavIndex(prevIndex);
             const target = navMarkers[prevIndex];
             scrollToMarker(target.markerIndex, target.imageIndex);
@@ -304,6 +326,8 @@ const Player: React.FC = () => {
                     <MoveDown size={20} />
                 </button>
 
+                <div className="h-4" />
+
                 {/* Edit */}
                 <button
                     onClick={() => navigate(`/deck/${deckId}/edit`, { state: { transform } })}
@@ -332,11 +356,8 @@ const Player: React.FC = () => {
                                 imageId={image.id!}
                                 imageData={image.imageData}
                                 markers={image.markers}
-                                onMarkerUpdate={() => {
-                                    // Refresh logic if needed, but useLiveQuery handles it mostly?
-                                    // Actually useLiveQuery updates `dbImages` when DB changes.
-                                    // So `images` state will update automatically via useEffect.
-                                }}
+                                transparentMarkers={transparentMarkers[image.id!] || new Set()}
+                                onMarkerTap={(index) => handleMarkerTap(image.id!, index)}
                             />
                         </div>
                     ))}

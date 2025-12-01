@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            padding: 40px;
+            background: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+            justify-content: center;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+        }
+
+        .icon-container {
+            width: 160px;
+            height: 160px;
+            background: white;
+            border-radius: 38px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h3 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 6px 0 0;
+            color: #7f8c8d;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. The Capture (Visual Memory) -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Camera Lens / Shutter -->
+                <circle cx="50" cy="50" r="30" stroke="white" stroke-width="6" fill="none" opacity="0.9" />
+                <circle cx="50" cy="50" r="12" fill="white" opacity="0.9" />
+                <!-- Viewfinder corners -->
+                <path d="M20 30 V20 H30 M80 30 V20 H70 M20 70 V80 H30 M80 70 V80 H70" stroke="white" stroke-width="6"
+                    stroke-linecap="round" opacity="0.6" />
+            </svg>
+        </div>
+        <h3>1. The Capture</h3>
+        <p>Focuses on the "Image" aspect. Visual memory capture.</p>
+    </div>
+
+    <!-- 2. The Pin (Marking the Spot) -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Map Pin -->
+                <path d="M50 15 C30 15 15 30 15 50 C15 75 50 95 50 95 C50 95 85 75 85 50 C85 30 70 15 50 15 Z"
+                    fill="#ff6b6b" />
+                <circle cx="50" cy="45" r="15" fill="white" />
+            </svg>
+        </div>
+        <h3>2. The Pin</h3>
+        <p>Marking a specific point. Precision and location.</p>
+    </div>
+
+    <!-- 3. The Puzzle (Connecting Knowledge) -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Puzzle Piece -->
+                <path
+                    d="M35 25 H65 V40 C65 48 77 48 77 40 V25 H90 V55 H75 C67 55 67 67 75 67 H90 V90 H60 V75 C60 67 48 67 48 75 V90 H20 V60 H35 C43 60 43 48 35 48 H20 V25 H35 Z"
+                    fill="white" stroke="#20B2AA" stroke-width="2" />
+            </svg>
+        </div>
+        <h3>3. The Puzzle</h3>
+        <p>Fitting information together. Solving the problem.</p>
+    </div>
+
+    <!-- 4. The Eye (Observation) -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Abstract Eye -->
+                <path d="M10 50 Q50 10 90 50 Q50 90 10 50 Z" fill="white" opacity="0.9" />
+                <circle cx="50" cy="50" r="18" fill="#9b59b6" />
+                <circle cx="50" cy="50" r="8" fill="#333" />
+            </svg>
+        </div>
+        <h3>4. The Eye</h3>
+        <p>Visual learning and observation. Seeing the details.</p>
+    </div>
+
+    <!-- 5. The Star (Mastery) -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Rounded Star -->
+                <path d="M50 15 L60 40 L88 40 L65 58 L75 85 L50 68 L25 85 L35 58 L12 40 L40 40 Z" fill="white"
+                    stroke="#e67e22" stroke-width="4" stroke-linejoin="round" />
+            </svg>
+        </div>
+        <h3>5. The Star</h3>
+        <p>Achievement and mastery. The goal of learning.</p>
+    </div>
+
+</body>
+
+</html>

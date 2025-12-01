@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            padding: 40px;
+            background: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            justify-content: center;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+        }
+
+        .icon-container {
+            width: 160px;
+            height: 160px;
+            background: white;
+            border-radius: 38px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h3 {
+            margin: 0;
+            color: #1a1a1a;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 6px 0 0;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. The Open Book -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Book Cover -->
+                <path d="M50 20 L85 30 V80 L50 70 L15 80 V30 L50 20 Z" fill="white" opacity="0.9" />
+                <!-- Spine -->
+                <path d="M50 20 V70" stroke="#4facfe" stroke-width="2" />
+                <!-- Pages -->
+                <path d="M50 70 L85 80 M50 70 L15 80" stroke="#4facfe" stroke-width="2" opacity="0.5" />
+            </svg>
+        </div>
+        <h3>1. Open Book</h3>
+        <p>Classic symbol of learning. Open and ready.</p>
+    </div>
+
+    <!-- 2. Modern Note (Dog-ear) -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Paper -->
+                <path d="M25 15 H60 L80 35 V85 C80 90 75 95 70 95 H25 C20 95 15 90 15 85 V20 C15 15 20 15 25 15 Z"
+                    fill="white" />
+                <!-- Fold -->
+                <path d="M60 15 V35 H80" fill="#f0f0f0" />
+                <!-- Lines -->
+                <line x1="25" y1="40" x2="65" y2="40" stroke="#FF9A9E" stroke-width="4" stroke-linecap="round" />
+                <line x1="25" y1="55" x2="70" y2="55" stroke="#FF9A9E" stroke-width="4" stroke-linecap="round"
+                    opacity="0.6" />
+                <line x1="25" y1="70" x2="50" y2="70" stroke="#FF9A9E" stroke-width="4" stroke-linecap="round"
+                    opacity="0.6" />
+            </svg>
+        </div>
+        <h3>2. Modern Note</h3>
+        <p>Clean, digital-friendly note style.</p>
+    </div>
+
+    <!-- 3. Spiral Notebook -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Cover -->
+                <rect x="20" y="15" width="60" height="75" rx="4" fill="white" />
+                <!-- Spiral Holes -->
+                <circle cx="28" cy="20" r="3" fill="#a18cd1" />
+                <circle cx="28" cy="35" r="3" fill="#a18cd1" />
+                <circle cx="28" cy="50" r="3" fill="#a18cd1" />
+                <circle cx="28" cy="65" r="3" fill="#a18cd1" />
+                <circle cx="28" cy="80" r="3" fill="#a18cd1" />
+                <!-- Content -->
+                <rect x="40" y="25" width="30" height="4" rx="2" fill="#ddd" />
+                <rect x="40" y="35" width="30" height="4" rx="2" fill="#ddd" />
+                <rect x="40" y="45" width="20" height="4" rx="2" fill="#ddd" />
+            </svg>
+        </div>
+        <h3>3. Spiral</h3>
+        <p>Familiar sketchbook feel. Creative and casual.</p>
+    </div>
+
+    <!-- 4. Grid/Graph Paper -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <rect x="15" y="15" width="70" height="70" rx="8" fill="white" />
+                <!-- Grid Lines -->
+                <path d="M15 32.5 H85 M15 50 H85 M15 67.5 H85" stroke="#84fab0" stroke-width="1" />
+                <path d="M32.5 15 V85 M50 15 V85 M67.5 15 V85" stroke="#84fab0" stroke-width="1" />
+                <!-- Highlight Circle -->
+                <circle cx="50" cy="50" r="15" stroke="#20B2AA" stroke-width="4" fill="none" />
+            </svg>
+        </div>
+        <h3>4. Grid</h3>
+        <p>Structured, precise, and organized.</p>
+    </div>
+
+    <!-- 5. Tabbed Binder -->
+    <div class="wrapper">
+        <div class="icon-container" style="background: linear-gradient(135deg, #fccb90 0%, #d57eeb 100%);">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <!-- Back Cover -->
+                <rect x="20" y="15" width="60" height="75" rx="4" fill="white" opacity="0.5" />
+                <!-- Tabs -->
+                <rect x="80" y="25" width="10" height="15" rx="2" fill="#FF6B6B" />
+                <rect x="80" y="45" width="10" height="15" rx="2" fill="#4ECDC4" />
+                <rect x="80" y="65" width="10" height="15" rx="2" fill="#FFE66D" />
+                <!-- Front Page -->
+                <rect x="15" y="15" width="65" height="75" rx="4" fill="white" />
+                <path d="M30 40 H60" stroke="#ddd" stroke-width="4" stroke-linecap="round" />
+            </svg>
+        </div>
+        <h3>5. Tabbed</h3>
+        <p>Organized by subject. Multi-faceted.</p>
+    </div>
+
+</body>
+
+</html>

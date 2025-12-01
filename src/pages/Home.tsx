@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
-import { FolderInput, Pen, Plus } from 'lucide-react';
+import { FolderInput, Pen, Plus, Settings } from 'lucide-react';
 import { db, type Deck } from '../db/db';
 import GlobalSettingsModal from '../components/GlobalSettingsModal';
 import DeckCreateModal from '../components/DeckCreateModal';
@@ -127,7 +127,7 @@ const Home: React.FC = () => {
                                     className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
                                     title="設定"
                                 >
-                                    <FolderInput size={18} />
+                                    <Settings size={18} />
                                 </button>
                             </div>
 

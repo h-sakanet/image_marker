@@ -69,7 +69,7 @@ const Home: React.FC = () => {
                                     </div>
                                 )}
                                 {/* White Overlay for Visibility */}
-                                <div className="absolute inset-0 bg-white/20 pointer-events-none" />
+                                <div className="absolute inset-0 bg-white/30 pointer-events-none" />
                                 {/* Gradient Overlay for Text Readability */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/30 opacity-60 pointer-events-none" />
                             </Link>

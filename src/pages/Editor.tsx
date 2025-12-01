@@ -254,7 +254,7 @@ const Editor: React.FC = () => {
         if (firstImg && firstImg.naturalWidth > 0) {
             const padding = 40; // Horizontal padding
             const availableWidth = window.innerWidth - padding;
-            const scale = Math.min(availableWidth / firstImg.naturalWidth, 1); // Don't zoom in more than 100% by default? Or allow it? User said "fit to screen".
+
             // Actually, if image is small, we might want to center it at 1.0.
             // If image is huge, scale down.
             // Let's just fit width.

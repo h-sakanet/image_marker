@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Loader2, X, Trash2, Settings } from 'lucide-react';
+import { Loader2, Trash2, Settings } from 'lucide-react';
 import { db, type ImageItem, type Marker } from '../db/db';
 import Toolbar, { type ToolType } from '../components/Toolbar';
 import ImageEditor from '../components/ImageEditor';

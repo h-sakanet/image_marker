@@ -10,13 +10,18 @@
             width: 512px;
             height: 512px;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            outline: none;
+            /* Ensure background covers entire viewport to avoid "white" or "blue" gaps */
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
         }
 
         .icon-container {
             width: 512px;
             height: 512px;
-            /* Pale Gray Gradient Background */
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            /* Background is already on body, but keep here for container integrity */
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;

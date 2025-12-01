@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="512" height="512"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Fill white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Draw Icon
+        const img = new Image();
+        const svgData = `
+        <svg width="512" height="512" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 10 L15 80" stroke="#FF69B4" stroke-width="14" stroke-linecap="round" opacity="0.9" />
+            <path d="M50 10 L85 80" stroke="#00FF00" stroke-width="14" stroke-linecap="round" opacity="0.9" />
+            <path d="M32 57 L68 57" stroke="#333" stroke-width="5" stroke-linecap="round" opacity="0.2" />
+        </svg>`;
+
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0);
+
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'icon_clean.png';
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.setAttribute('data-downloaded', 'true');
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+    </script>
+</body>
+
+</html>

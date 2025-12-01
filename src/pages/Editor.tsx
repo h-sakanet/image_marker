@@ -167,6 +167,15 @@ const Editor: React.FC = () => {
         } else if (!targetMarker.groupId) {
             // Link (Only if target has no group)
             newMarkers[targetIndex] = { ...targetMarker, groupId };
+
+            // Reorder if Parent is after Child (to ensure Parent controls the group)
+            if (parentIndex > targetIndex) {
+                // Move Parent to be before Child
+                // Remove Parent from old position
+                const [movedParent] = newMarkers.splice(parentIndex, 1);
+                // Insert Parent at Target's position (pushing Target down)
+                newMarkers.splice(targetIndex, 0, movedParent);
+            }
         } else {
             // Target belongs to another group -> Ignore (Exclusive Rule)
             // Optional: Notify user "Marker belongs to another group"

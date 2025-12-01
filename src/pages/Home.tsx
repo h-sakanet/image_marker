@@ -115,28 +115,11 @@ const Home: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {decks?.map((deck: any) => (
                         <div key={deck.id} className="group relative aspect-video bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/30 opacity-60 pointer-events-none" />
+                        </Link>
 
-                            {/* Main Click Area (Play) */}
-                            <Link to={`/deck/${deck.id}/play`} className="absolute inset-0 z-0">
-                                {deck.image ? (
-                                    <img
-                                        src={typeof deck.image === 'string' ? deck.image : ''}
-                                        alt={deck.title}
-                                        className="w-full h-full object-cover bg-white"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400 bg-gray-50">
-                                        <span className="text-sm">No Image</span>
-                                    </div>
-                                )}
-                                {/* White Overlay for Visibility */}
-                                <div className="absolute inset-0 bg-white/30 pointer-events-none" />
-                                {/* Gradient Overlay for Text Readability */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/30 opacity-60 pointer-events-none" />
-                            </Link>
-
-                            {/* Title (Top Left) */}
-                            <div className="absolute top-3 left-4 z-10 pointer-events-none">
+                            {/* Title (Top Left) */ }
+                        < div className = "absolute top-3 left-4 z-10 pointer-events-none" >
                                 <h3 className="text-lg font-bold text-gray-900 [-webkit-text-stroke:3px_rgba(255,255,255,0.8)] [paint-order:stroke_fill] truncate max-w-[200px] leading-tight">
                                     {deck.title}
                                 </h3>
@@ -147,48 +130,50 @@ const Home: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Right Action Bar */}
-                            <div className="absolute top-0 right-0 bottom-0 w-14 flex flex-col items-center justify-center gap-4 z-20">
+                {/* Right Action Bar */}
+                <div className="absolute top-0 right-0 bottom-0 w-14 flex flex-col items-center justify-center gap-4 z-20">
 
-                                {/* Edit Button */}
-                                <Link
-                                    to={`/deck/${deck.id}/edit`}
-                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95"
-                                    title="編集"
-                                >
-                                    <Pen size={20} />
-                                </Link>
+                    {/* Edit Button */}
+                    <Link
+                        to={`/deck/${deck.id}/edit`}
+                        className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95"
+                        title="編集"
+                    >
+                        <Pen size={20} />
+                    </Link>
 
-                                {/* Settings Button */}
-                                <button
-                                    onClick={() => setEditingDeck(deck)}
-                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95"
-                                    title="設定"
-                                >
-                                    <Settings size={20} />
-                                </button>
-                            </div>
-
-                        </div>
-                    ))}
+                    {/* Settings Button */}
+                    <button
+                        onClick={() => setEditingDeck(deck)}
+                        className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95"
+                        title="設定"
+                    >
+                        <Settings size={20} />
+                    </button>
                 </div>
+
             </div>
-
-            {isCreateModalOpen && (
-                <DeckCreateModal
-                    onClose={() => setIsCreateModalOpen(false)}
-                    onCreated={() => { }}
-                />
-            )}
-
-            {editingDeck && (
-                <DeckSettingsModal
-                    deck={editingDeck}
-                    onClose={() => setEditingDeck(null)}
-                    onDelete={() => setEditingDeck(null)}
-                />
-            )}
+                    ))}
         </div>
+            </div >
+
+    { isCreateModalOpen && (
+        <DeckCreateModal
+            onClose={() => setIsCreateModalOpen(false)}
+            onCreated={() => { }}
+        />
+    )}
+
+{
+    editingDeck && (
+        <DeckSettingsModal
+            deck={editingDeck}
+            onClose={() => setEditingDeck(null)}
+            onDelete={() => setEditingDeck(null)}
+        />
+    )
+}
+        </div >
     );
 };
 

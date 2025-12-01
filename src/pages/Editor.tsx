@@ -175,6 +175,9 @@ const Editor: React.FC = () => {
                 const [movedParent] = newMarkers.splice(parentIndex, 1);
                 // Insert Parent at Target's position (pushing Target down)
                 newMarkers.splice(targetIndex, 0, movedParent);
+
+                // Update Link Mode to track the moved Parent
+                setLinkMode(prev => ({ ...prev, parentMarkerIndex: targetIndex }));
             }
         } else {
             // Target belongs to another group -> Ignore (Exclusive Rule)

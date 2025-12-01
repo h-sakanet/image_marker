@@ -58,3 +58,17 @@
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-gray-400);
 }
+
+/* Disable long-press and text selection globally */
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Re-enable for inputs */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}

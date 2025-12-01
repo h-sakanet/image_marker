@@ -19,7 +19,7 @@ const Home: React.FC = () => {
     const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50 pb-20 touch-pan-y">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <header className="flex items-center justify-between py-6">
@@ -74,7 +74,7 @@ const Home: React.FC = () => {
 
                             {/* Title (Top Left) */}
                             <div className="absolute top-3 left-4 z-10 pointer-events-none">
-                                <h3 className="text-lg font-bold text-gray-900 [-webkit-text-stroke:1.5px_rgba(255,255,255,0.8)] [paint-order:stroke_fill] truncate max-w-[200px] leading-tight">
+                                <h3 className="text-lg font-bold text-gray-900 [-webkit-text-stroke:3px_rgba(255,255,255,0.8)] [paint-order:stroke_fill] truncate max-w-[200px] leading-tight">
                                     {deck.title}
                                 </h3>
                             </div>

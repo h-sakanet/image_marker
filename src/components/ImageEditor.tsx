@@ -21,6 +21,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 }) => {
     const [imageUrl, setImageUrl] = useState<string>('');
     const [isDrawing, setIsDrawing] = useState(false);
+    const [isImageLoaded, setIsImageLoaded] = useState(false);
     const [startPos, setStartPos] = useState<{ x: number, y: number } | null>(null);
     const [currentPos, setCurrentPos] = useState<{ x: number, y: number } | null>(null);
 
@@ -219,13 +220,14 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 alt="Study material"
                 className="block max-w-full h-auto pointer-events-none select-none"
                 draggable={false}
+                onLoad={() => setIsImageLoaded(true)}
                 onError={(e) => console.error("Image load error:", e)}
             />
 
             <svg
                 ref={svgRef}
                 className="absolute inset-0 w-full h-full"
-                viewBox={imgRef.current ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
+                viewBox={imgRef.current && isImageLoaded ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
             >
                 {markers.map((marker, index) => (
                     <rect
@@ -255,7 +257,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                         height={Math.abs(currentPos.y - startPos.y)}
                         fill="none"
                         stroke="#FF69B4"
-                        strokeWidth={2 * (1 / scale)}
+                        strokeWidth={10 * (1 / scale)}
                         strokeDasharray="4"
                     />
                 )}

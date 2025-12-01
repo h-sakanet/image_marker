@@ -18,7 +18,8 @@ const Editor: React.FC = () => {
     const [images, setImages] = useState<ImageItem[]>([]);
 
     // Zoom & Pan State
-    const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
+    // Initial scale 0.5 to fit large images better on load (since we removed max-w-full)
+    const [transform, setTransform] = useState({ scale: 0.5, x: 0, y: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
     const lastTouchRef = useRef<{ x: number, y: number } | null>(null);
     const lastDistRef = useRef<number | null>(null);

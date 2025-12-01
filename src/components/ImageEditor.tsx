@@ -216,6 +216,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         e.preventDefault(); // Prevent scrolling if it bubbles
 
         if (activeTool === 'eraser') {
+            // Strict check for Pen/Stylus for Eraser too
+            if ((e.nativeEvent as PointerEvent).pointerType !== 'pen') return;
+
             onRemoveMarker(index);
             return;
         }
@@ -255,7 +258,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 ref={imgRef}
                 src={imageUrl}
                 alt="Study material"
-                className="block max-w-full h-auto pointer-events-none select-none"
+                className="block pointer-events-none select-none"
+                style={{ maxWidth: 'none', height: 'auto' }}
                 draggable={false}
                 onLoad={() => setIsImageLoaded(true)}
                 onError={(e) => console.error("Image load error:", e)}

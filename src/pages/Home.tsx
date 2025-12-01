@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { Settings, Pen, Plus } from 'lucide-react';
@@ -7,32 +7,16 @@ import DeckCreateModal from '../components/DeckCreateModal';
 import DeckSettingsModal from '../components/DeckSettingsModal';
 
 const Home: React.FC = () => {
-    const decks = useLiveQuery(() => db.decks.orderBy('createdAt').reverse().toArray());
+    const decks = useLiveQuery(async () => {
+        const allDecks = await db.decks.orderBy('createdAt').reverse().toArray();
+        const decksWithImages = await Promise.all(allDecks.map(async (deck) => {
+            const firstImage = await db.images.where('deckId').equals(deck.id!).first();
+            return { ...deck, image: firstImage?.imageData };
+        }));
+        return decksWithImages;
+    });
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
-    const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
-
-    useEffect(() => {
-        const loadThumbnails = async () => {
-            if (!decks) return;
-
-            const newThumbnails: Record<number, string> = {};
-            for (const deck of decks) {
-                if (deck.id) {
-                    const firstImage = await db.images.where('deckId').equals(deck.id).sortBy('order');
-                    if (firstImage && firstImage.length > 0) {
-                        newThumbnails[deck.id] = URL.createObjectURL(firstImage[0].imageData as Blob);
-                    }
-                }
-            }
-            setThumbnails(newThumbnails);
-        };
-        loadThumbnails();
-
-        return () => {
-            Object.values(thumbnails).forEach(url => URL.revokeObjectURL(url));
-        };
-    }, [decks]);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -68,14 +52,14 @@ const Home: React.FC = () => {
 
                 {/* Deck Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {decks?.map(deck => (
+                    {decks?.map((deck: any) => (
                         <div key={deck.id} className="group relative aspect-video bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
 
                             {/* Main Click Area (Play) */}
                             <Link to={`/deck/${deck.id}/play`} className="absolute inset-0 z-0">
-                                {thumbnails[deck.id!] ? (
+                                {deck.image ? (
                                     <img
-                                        src={thumbnails[deck.id!]}
+                                        src={typeof deck.image === 'string' ? deck.image : ''}
                                         alt={deck.title}
                                         className="w-full h-full object-cover bg-white"
                                     />

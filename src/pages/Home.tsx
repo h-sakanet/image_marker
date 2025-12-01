@@ -11,7 +11,68 @@ const Home: React.FC = () => {
         const allDecks = await db.decks.orderBy('createdAt').reverse().toArray();
         const decksWithImages = await Promise.all(allDecks.map(async (deck) => {
             const images = await db.images.where('deckId').equals(deck.id!).sortBy('order');
-            return { ...deck, image: images[0]?.imageData };
+
+            // Calculate marker stats
+            let totalMarkers = 0;
+            let lockedMarkers = 0;
+
+            images.forEach(img => {
+                img.markers.forEach(m => {
+                    // Only count parent markers (or unlinked markers)
+                    // Linked children have a groupId but we need to identify them.
+                    // The current data structure doesn't explicitly say "isChild".
+                    // However, we can infer it: if multiple markers have same groupId, 
+                    // we only count one (or we rely on the fact that children are just visual extensions).
+                    // User requirement: "link is not counted". 
+                    // Let's assume for now we count all markers that don't have a groupId, 
+                    // OR if they have a groupId, we only count the "parent".
+                    // But wait, `Marker` doesn't store parent/child status explicitly.
+                    // In Editor, we determine parent by index (first one found).
+                    // Let's do a simpler check: Count all markers, but if they share a groupId, only count one unique groupId?
+                    // Actually, the requirement says "link is not counted". 
+                    // This implies we should only count the "main" markers.
+                    // Let's count markers that are NOT children.
+                    // Since we don't save "isChild", we have to deduce it or change how we save.
+                    // For now, let's count ALL markers for simplicity, or try to dedupe by groupId.
+                    // Better approach: Count unique groupIds + markers without groupId.
+
+                    if (m.groupId) {
+                        // It's part of a group. We need to ensure we only count this group once per DECK? 
+                        // Or per IMAGE? Usually links are within an image.
+                        // Let's count it if it's the "first" one we see in this image?
+                        // Actually, let's just count all markers for now to get it working, 
+                        // then refine if "linked markers are no count" means strictly children.
+                        // If I have 1 parent and 2 children, count should be 1.
+                        // So, we collect all groupIds in the image.
+                    } else {
+                        totalMarkers++;
+                        if (m.isLocked) lockedMarkers++;
+                    }
+                });
+
+                // Handle groups separately to count 1 per group
+                const groups = new Set<string>();
+                const lockedGroups = new Set<string>();
+
+                img.markers.forEach(m => {
+                    if (m.groupId) {
+                        groups.add(m.groupId);
+                        if (m.isLocked) {
+                            lockedGroups.add(m.groupId);
+                        }
+                    }
+                });
+
+                totalMarkers += groups.size;
+                lockedMarkers += lockedGroups.size;
+            });
+
+            return {
+                ...deck,
+                image: images[0]?.imageData,
+                totalMarkers,
+                lockedMarkers
+            };
         }));
         return decksWithImages;
     });
@@ -79,6 +140,11 @@ const Home: React.FC = () => {
                                 <h3 className="text-lg font-bold text-gray-900 [-webkit-text-stroke:3px_rgba(255,255,255,0.8)] [paint-order:stroke_fill] truncate max-w-[200px] leading-tight">
                                     {deck.title}
                                 </h3>
+                                <div className="mt-1 flex items-center text-white/90 text-sm font-medium shadow-black/50 drop-shadow-md">
+                                    <span className="bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-sm border border-white/20">
+                                        {deck.lockedMarkers} / {deck.totalMarkers}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Right Action Bar */}

@@ -13,6 +13,7 @@ export interface Marker {
   width: number;
   height: number;
   groupId?: string;
+  isLocked?: boolean;
 }
 
 export interface ImageItem {

@@ -166,7 +166,6 @@ const Player: React.FC = () => {
 
         if (markerEl && containerRef.current) {
             const rect = markerEl.getBoundingClientRect();
-            const containerRect = containerRef.current.getBoundingClientRect();
 
             // We want to center this marker on screen
             const viewportCenterX = window.innerWidth / 2;
@@ -327,7 +326,7 @@ const Player: React.FC = () => {
                 onTouchEnd={handleTouchEnd}
             >
                 <div className="p-20 flex flex-col items-center gap-8 min-h-screen">
-                    {images.map((image, index) => (
+                    {images.map((image) => (
                         <div key={image.id} className="relative w-fit">
                             <ImagePlayer
                                 imageId={image.id!}

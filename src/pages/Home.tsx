@@ -132,40 +132,39 @@ const Home: React.FC = () => {
                                 {/* White Overlay for Visibility */}
                                 <div className="absolute inset-0 bg-white/30 pointer-events-none" />
                                 {/* Gradient Overlay for Text Readability */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/30 opacity-60 pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 pointer-events-none" />
                             </Link>
 
-                            {/* Title (Top Left) */}
-                            <div className="absolute top-3 left-4 z-10 pointer-events-none">
-                                <h3 className="text-lg font-bold text-gray-900 [-webkit-text-stroke:3px_rgba(255,255,255,0.8)] [paint-order:stroke_fill] truncate max-w-[200px] leading-tight">
+                            {/* Title & Stats (Bottom Left) */}
+                            <div className="absolute bottom-4 left-4 z-10 pointer-events-none pr-16">
+                                <h3 className="text-lg font-bold text-white drop-shadow-md truncate leading-tight">
                                     {deck.title}
                                 </h3>
-                                <div className="mt-1 flex items-center text-white/90 text-sm font-medium shadow-black/50 drop-shadow-md">
-                                    <span className="bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-sm border border-white/20">
+                                <div className="mt-1 flex items-center text-white/90 text-sm font-medium drop-shadow-md">
+                                    <span>
                                         {deck.totalMarkers > 0 ? Math.round((deck.lockedMarkers / deck.totalMarkers) * 100) : 0}% ({deck.lockedMarkers}/{deck.totalMarkers})
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Right Action Bar */}
-                            <div className="absolute top-0 right-0 bottom-0 w-14 flex flex-col items-center justify-center gap-4 z-20">
-
+                            {/* Action Buttons (Top Right) */}
+                            <div className="absolute top-3 right-3 z-20 flex gap-2">
                                 {/* Edit Button */}
                                 <Link
                                     to={`/deck/${deck.id}/edit`}
-                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95"
+                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
                                     title="編集"
                                 >
-                                    <Pen size={20} />
+                                    <Pen size={18} />
                                 </Link>
 
                                 {/* Settings Button */}
                                 <button
                                     onClick={() => setEditingDeck(deck)}
-                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95"
+                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
                                     title="設定"
                                 >
-                                    <Settings size={20} />
+                                    <Settings size={18} />
                                 </button>
                             </div>
 

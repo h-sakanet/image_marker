@@ -103,7 +103,25 @@ const GlobalSettingsModal: React.FC<GlobalSettingsModalProps> = ({ onClose }) =>
                 throw new Error("Invalid backup data format.");
             }
 
-            // Restore Data
+            // Prepare data OUTSIDE the transaction to avoid "Transaction committed too early"
+            const imagesToRestore: ImageItem[] = [];
+            for (const imgMeta of data.images) {
+                const imgFile = zip.file(`images/${imgMeta.id}.png`);
+                let blob: Blob | null = null;
+
+                if (imgFile) {
+                    blob = await imgFile.async("blob");
+                }
+
+                if (blob) {
+                    imagesToRestore.push({
+                        ...imgMeta,
+                        imageData: blob
+                    });
+                }
+            }
+
+            // Restore Data (Transaction is now synchronous-like regarding async calls)
             await db.transaction('rw', db.decks, db.images, async () => {
                 // Option: Clear existing data? For now, let's Merge/Overwrite based on ID.
                 // Or maybe safer to clear all for a "Restore" operation?
@@ -120,22 +138,6 @@ const GlobalSettingsModal: React.FC<GlobalSettingsModalProps> = ({ onClose }) =>
                 await db.decks.bulkAdd(data.decks);
 
                 // Restore Images
-                const imagesToRestore: ImageItem[] = [];
-                for (const imgMeta of data.images) {
-                    const imgFile = zip.file(`images/${imgMeta.id}.png`);
-                    let blob: Blob | null = null;
-
-                    if (imgFile) {
-                        blob = await imgFile.async("blob");
-                    }
-
-                    if (blob) {
-                        imagesToRestore.push({
-                            ...imgMeta,
-                            imageData: blob
-                        });
-                    }
-                }
                 await db.images.bulkAdd(imagesToRestore);
             });
 

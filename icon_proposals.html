@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            display: flex;
+            gap: 50px;
+            padding: 50px;
+            background: #f0f0f0;
+        }
+
+        .icon-container {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        h3 {
+            text-align: center;
+            font-family: sans-serif;
+            margin-top: 20px;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Proposal 1: Abstract Lines -->
+    <div class="wrapper">
+        <div class="icon-container">
+            <svg width="120" height="120" viewBox="0 0 100 100">
+                <line x1="20" y1="20" x2="80" y2="80" stroke="#FF69B4" stroke-width="15" stroke-linecap="round"
+                    opacity="0.8" />
+                <line x1="80" y1="20" x2="20" y2="80" stroke="#00FF00" stroke-width="15" stroke-linecap="round"
+                    opacity="0.8" />
+            </svg>
+        </div>
+        <h3>1. Abstract Lines</h3>
+    </div>
+
+    <!-- Proposal 2: Notebook -->
+    <div class="wrapper">
+        <div class="icon-container">
+            <svg width="140" height="140" viewBox="0 0 100 100">
+                <!-- Notebook Cover -->
+                <rect x="15" y="10" width="70" height="80" rx="5" fill="#f8f8f8" stroke="#ddd" stroke-width="2" />
+                <!-- Spiral -->
+                <circle cx="20" cy="20" r="3" fill="#333" />
+                <circle cx="20" cy="40" r="3" fill="#333" />
+                <circle cx="20" cy="60" r="3" fill="#333" />
+                <circle cx="20" cy="80" r="3" fill="#333" />
+                <!-- Lines -->
+                <line x1="30" y1="35" x2="75" y2="35" stroke="#FF69B4" stroke-width="6" stroke-linecap="round"
+                    opacity="0.6" />
+                <line x1="30" y1="55" x2="75" y2="55" stroke="#00FF00" stroke-width="6" stroke-linecap="round"
+                    opacity="0.6" />
+            </svg>
+        </div>
+        <h3>2. Notebook</h3>
+    </div>
+
+    <!-- Proposal 3: Pen & Check -->
+    <div class="wrapper">
+        <div class="icon-container">
+            <svg width="130" height="130" viewBox="0 0 100 100">
+                <!-- Checkmark Lines -->
+                <path d="M20 50 L40 70 L80 30" fill="none" stroke="#ddd" stroke-width="10" stroke-linecap="round" />
+                <path d="M20 50 L40 70" fill="none" stroke="#FF69B4" stroke-width="10" stroke-linecap="round" />
+                <path d="M40 70 L80 30" fill="none" stroke="#00FF00" stroke-width="10" stroke-linecap="round" />
+                <!-- Pen Tip -->
+                <path d="M75 25 L90 10 L95 15 L80 30 Z" fill="#333" />
+            </svg>
+        </div>
+        <h3>3. Pen & Check</h3>
+    </div>
+
+</body>
+
+</html>

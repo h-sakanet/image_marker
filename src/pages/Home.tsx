@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { Settings, Pen, Plus } from 'lucide-react';
 import { db, type Deck } from '../db/db';
 import GlobalSettingsModal from '../components/GlobalSettingsModal';
+import DeckCreateModal from '../components/DeckCreateModal';
+import DeckSettingsModal from '../components/DeckSettingsModal';
 
 const Home: React.FC = () => {
     const decks = useLiveQuery(async () => {
@@ -78,7 +80,101 @@ const Home: React.FC = () => {
                     </div>
                 </header>
 
-                {/* ... existing content ... */}
+                {/* Empty State */}
+                {decks?.length === 0 && (
+                    <div className="text-center py-32">
+                        <div className="mx-auto h-24 w-24 text-gray-300 mb-4 flex items-center justify-center">
+                            <Plus size={64} strokeWidth={1} />
+                        </div>
+                        <h3 className="mt-2 text-lg font-medium text-gray-900">暗記ノートを作成しましょう</h3>
+                        <div className="mt-6">
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                            >
+                                作成する
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Deck Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {decks?.map((deck: any) => (
+                        <div key={deck.id} className="group relative aspect-video bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+
+                            {/* Main Click Area (Play) */}
+                            <Link to={`/deck/${deck.id}/play`} className="absolute inset-0 z-0">
+                                {deck.image ? (
+                                    <img
+                                        src={typeof deck.image === 'string' ? deck.image : ''}
+                                        alt={deck.title}
+                                        className="w-full h-full object-cover object-top bg-white"
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-center h-full text-gray-400 bg-gray-50">
+                                        <span className="text-sm">No Image</span>
+                                    </div>
+                                )}
+                                {/* White Overlay for Visibility */}
+                                <div className="absolute inset-0 bg-white/30 pointer-events-none" />
+                                {/* Gradient Overlay for Text Readability */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 pointer-events-none" />
+                            </Link>
+
+                            {/* Title & Stats (Bottom Left) */}
+                            <div className="absolute bottom-4 left-4 z-10 pointer-events-none pr-16">
+                                <h3 className="text-lg font-bold text-white drop-shadow-md truncate leading-tight">
+                                    {deck.title}
+                                </h3>
+                                <div className="mt-1 flex items-center text-white/90 text-sm font-medium drop-shadow-md">
+                                    <span>
+                                        {deck.totalMarkers > 0 ? Math.round((deck.lockedMarkers / deck.totalMarkers) * 100) : 0}% ({deck.lockedMarkers}/{deck.totalMarkers})
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons (Top Right) */}
+                            <div className="absolute top-3 right-3 z-20 flex gap-2">
+                                {/* Edit Button */}
+                                <Link
+                                    to={`/deck/${deck.id}/edit`}
+                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
+                                    title="編集"
+                                >
+                                    <Pen size={18} />
+                                </Link>
+
+                                {/* Settings Button */}
+                                <button
+                                    onClick={() => setEditingDeck(deck)}
+                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
+                                    title="設定"
+                                >
+                                    <Settings size={18} />
+                                </button>
+                            </div>
+
+                        </div>
+                    ))}
+                </div>
+
+                {isCreateModalOpen && (
+                    <DeckCreateModal
+                        onClose={() => setIsCreateModalOpen(false)}
+                        onCreated={() => { }}
+                    />
+                )}
+
+                {
+                    editingDeck && (
+                        <DeckSettingsModal
+                            deck={editingDeck}
+                            onClose={() => setEditingDeck(null)}
+                            onDelete={() => setEditingDeck(null)}
+                        />
+                    )
+                }
 
                 {isSettingsModalOpen && (
                     <GlobalSettingsModal

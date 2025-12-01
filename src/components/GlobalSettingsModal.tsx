@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Download, Upload, X, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { db, type Deck, type ImageItem } from '../db/db';
+import { db, type ImageItem } from '../db/db';
 
 interface GlobalSettingsModalProps {
     onClose: () => void;

@@ -229,6 +229,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 className="absolute inset-0 w-full h-full"
                 viewBox={imgRef.current && isImageLoaded ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
             >
+                <defs>
+                    <filter id="marker-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.4" />
+                    </filter>
+                </defs>
+
                 {markers.map((marker, index) => (
                     <rect
                         key={index}
@@ -238,7 +244,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                         height={marker.height}
                         fill="#FF69B4"
                         fillOpacity="1.0"
-                        stroke="none"
+                        stroke="#C71585"
+                        strokeWidth={10 * (1 / scale)}
+                        filter="url(#marker-shadow)"
                         onPointerDown={(e) => {
                             if (activeTool === 'eraser') {
                                 e.stopPropagation();
@@ -256,7 +264,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                         width={Math.abs(currentPos.x - startPos.x)}
                         height={Math.abs(currentPos.y - startPos.y)}
                         fill="none"
-                        stroke="#FF69B4"
+                        stroke="#C71585"
                         strokeWidth={10 * (1 / scale)}
                         strokeDasharray="4"
                     />

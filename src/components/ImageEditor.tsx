@@ -53,18 +53,13 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         }
     }, [imageData]);
 
-    const getSvgCoordinates = (e: React.PointerEvent) => {
-        if (!svgRef.current) return { x: 0, y: 0 };
-        const CTM = svgRef.current.getScreenCTM();
-        if (!CTM) return { x: 0, y: 0 };
 
-        return {
-            x: (e.clientX - CTM.e) / CTM.a,
-            y: (e.clientY - CTM.f) / CTM.d
-        };
-    };
 
-    // Native event listener for pointer down to handle passive: false
+    const isDrawingRef = useRef(false);
+    const startPosRef = useRef<{ x: number, y: number } | null>(null);
+    const currentPosRef = useRef<{ x: number, y: number } | null>(null);
+
+    // Native event listener for pointer events
     useEffect(() => {
         const svg = svgRef.current;
         if (!svg) return;
@@ -92,11 +87,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
 
         const onTouchMove = (e: TouchEvent) => {
-            // If we are drawing, we MUST stop scrolling
-            // But we need to be careful not to stop finger scrolling if we are not drawing with pen
-            // However, if we started with pen, we should prevent default.
-
-            // Check if any active touch is stylus
             let hasStylus = false;
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
@@ -123,7 +113,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 e.stopPropagation();
                 (e.target as Element).setPointerCapture(e.pointerId);
 
-                // Calculate coordinates manually since we're in a native event
                 const CTM = svg.getScreenCTM();
                 if (!CTM) return;
 
@@ -132,62 +121,88 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                     y: (e.clientY - CTM.f) / CTM.d
                 };
 
+                isDrawingRef.current = true;
+                startPosRef.current = pos;
+                currentPosRef.current = pos;
+
                 setIsDrawing(true);
                 setStartPos(pos);
                 setCurrentPos(pos);
             }
         };
 
+        const onPointerMove = (e: PointerEvent) => {
+            if (!isDrawingRef.current || activeTool !== 'pen') return;
+
+            // Double check pointer type
+            if (e.pointerType === 'touch') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const CTM = svg.getScreenCTM();
+            if (!CTM) return;
+
+            const pos = {
+                x: (e.clientX - CTM.e) / CTM.a,
+                y: (e.clientY - CTM.f) / CTM.d
+            };
+
+            currentPosRef.current = pos;
+            setCurrentPos(pos);
+            addLog(`Move: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
+        };
+
+        const onPointerUp = (e: PointerEvent) => {
+            if (!isDrawingRef.current || activeTool !== 'pen') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                (e.target as Element).releasePointerCapture(e.pointerId);
+            } catch (err) {
+                // Ignore if not captured
+            }
+
+            const start = startPosRef.current;
+            const current = currentPosRef.current;
+
+            if (start && current) {
+                const x = Math.min(start.x, current.x);
+                const y = Math.min(start.y, current.y);
+                const width = Math.abs(current.x - start.x);
+                const height = Math.abs(current.y - start.y);
+
+                if (width > 5 && height > 5) {
+                    onAddMarker({ x, y, width, height });
+                }
+            }
+
+            isDrawingRef.current = false;
+            startPosRef.current = null;
+            currentPosRef.current = null;
+
+            setIsDrawing(false);
+            setStartPos(null);
+            setCurrentPos(null);
+        };
+
         svg.addEventListener('touchstart', onTouchStart, { passive: false });
         svg.addEventListener('touchmove', onTouchMove, { passive: false });
         svg.addEventListener('pointerdown', onPointerDown, { passive: false });
+        svg.addEventListener('pointermove', onPointerMove, { passive: false });
+        svg.addEventListener('pointerup', onPointerUp, { passive: false });
+        svg.addEventListener('pointercancel', onPointerUp, { passive: false });
 
         return () => {
             svg.removeEventListener('touchstart', onTouchStart);
             svg.removeEventListener('touchmove', onTouchMove);
             svg.removeEventListener('pointerdown', onPointerDown);
+            svg.removeEventListener('pointermove', onPointerMove);
+            svg.removeEventListener('pointerup', onPointerUp);
+            svg.removeEventListener('pointercancel', onPointerUp);
         };
-    }, [activeTool]); // Re-bind when tool changes
-
-    const handlePointerMove = (e: React.PointerEvent) => {
-        if (isDrawing) {
-            addLog(`Move: ${e.pointerType}, P: ${e.pressure.toFixed(2)}`);
-        }
-
-        if (!isDrawing || activeTool !== 'pen') return;
-
-        // Double check pointer type just in case, though isDrawing should handle it
-        if (e.pointerType === 'touch') return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        const pos = getSvgCoordinates(e);
-        setCurrentPos(pos);
-    };
-
-    const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isDrawing || activeTool !== 'pen') return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        (e.target as Element).releasePointerCapture(e.pointerId);
-
-        if (startPos && currentPos) {
-            const x = Math.min(startPos.x, currentPos.x);
-            const y = Math.min(startPos.y, currentPos.y);
-            const width = Math.abs(currentPos.x - startPos.x);
-            const height = Math.abs(currentPos.y - startPos.y);
-
-            if (width > 5 && height > 5) {
-                onAddMarker({ x, y, width, height });
-            }
-        }
-
-        setIsDrawing(false);
-        setStartPos(null);
-        setCurrentPos(null);
-    };
+    }, [activeTool, onAddMarker]); // Re-bind when tool/callback changes
 
     const handleMarkerClick = (index: number) => {
         if (activeTool === 'eraser') {
@@ -215,9 +230,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 ref={svgRef}
                 className="absolute inset-0 w-full h-full"
                 viewBox={imgRef.current ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
             >
                 {markers.map((marker, index) => (
                     <rect

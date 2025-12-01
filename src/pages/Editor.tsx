@@ -483,7 +483,7 @@ const Editor: React.FC = () => {
                                 {/* Settings Menu */}
                                 {settingsMenuOpenId === image.id && (
                                     <div
-                                        className="absolute top-16 right-2 bg-white rounded-xl shadow-xl p-4 w-64 pointer-events-auto z-50 animate-fade-in border border-gray-100 origin-top-right"
+                                        className="absolute top-20 right-2 bg-white rounded-xl shadow-xl p-4 w-64 pointer-events-auto z-50 animate-fade-in border border-gray-100 origin-top-right"
                                         style={{ transform: `scale(${1 / transform.scale})` }}
                                     >
                                         {/* Page Reordering */}

@@ -62,7 +62,7 @@ const DeckSettingsModal: React.FC<DeckSettingsModalProps> = ({ deck, onClose, on
                         <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
                             <Trash2 size={32} />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">暗記セットを削除しますか？</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">ノートを削除しますか？</h3>
                         <p className="text-gray-600 mb-8">この操作は取り消せません。<br />すべての画像とマーカーが削除されます。</p>
                         <div className="flex gap-4 w-full max-w-xs">
                             <button

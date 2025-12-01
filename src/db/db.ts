@@ -12,6 +12,7 @@ export interface Marker {
   y: number;
   width: number;
   height: number;
+  groupId?: string;
 }
 
 export interface ImageItem {

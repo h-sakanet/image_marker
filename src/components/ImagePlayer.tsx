@@ -58,7 +58,35 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({ imageData, markers }) => {
 
                 setRevealedIndices(prev => {
                     const newSet = new Set(prev);
-                    newSet.add(index);
+                    const clickedMarker = markers[index];
+                    const isCurrentlyRevealed = newSet.has(index);
+
+                    if (clickedMarker.groupId) {
+                        // Find all markers in the group
+                        const groupIndices = markers
+                            .map((m, i) => ({ ...m, index: i }))
+                            .filter(m => m.groupId === clickedMarker.groupId)
+                            .map(m => m.index);
+
+                        // Toggle all based on the clicked marker's state
+                        // If clicked marker is revealed -> hide all
+                        // If clicked marker is hidden -> reveal all
+                        groupIndices.forEach(idx => {
+                            if (isCurrentlyRevealed) {
+                                newSet.delete(idx);
+                            } else {
+                                newSet.add(idx);
+                            }
+                        });
+                    } else {
+                        // Single toggle
+                        if (isCurrentlyRevealed) {
+                            newSet.delete(index);
+                        } else {
+                            newSet.add(index);
+                        }
+                    }
+
                     return newSet;
                 });
             }

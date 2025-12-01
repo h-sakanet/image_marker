@@ -3,21 +3,29 @@ import type { Marker } from '../db/db';
 import type { ToolType } from './Toolbar';
 
 interface ImageEditorProps {
+    imageId?: number;
     imageData: Blob | string;
     markers: Marker[];
     activeTool: ToolType;
     onAddMarker: (marker: Marker) => void;
     onRemoveMarker: (index: number) => void;
     scale: number;
+    linkMode?: { active: boolean, parentMarkerIndex: number | null, imageId: number | null };
+    onEnterLinkMode?: (index: number) => void;
+    onLinkMarker?: (index: number) => void;
 }
 
 const ImageEditor: React.FC<ImageEditorProps> = ({
+    imageId,
     imageData,
     markers,
     activeTool,
     onAddMarker,
     onRemoveMarker,
-    scale
+    scale,
+    linkMode,
+    onEnterLinkMode,
+    onLinkMarker
 }) => {
     const [imageUrl, setImageUrl] = useState<string>('');
     const [isDrawing, setIsDrawing] = useState(false);
@@ -27,6 +35,16 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     const svgRef = useRef<SVGSVGElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
+
+    // Refs for drawing
+    const isDrawingRef = useRef(false);
+    const startPosRef = useRef<{ x: number, y: number } | null>(null);
+    const currentPosRef = useRef<{ x: number, y: number } | null>(null);
+
+    // Long press detection
+    const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isLongPressRef = useRef(false);
+    const pointerDownPosRef = useRef<{ x: number, y: number } | null>(null);
 
     useEffect(() => {
         if (imageData instanceof Blob) {
@@ -50,11 +68,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     }, [imageData]);
 
 
-
-    const isDrawingRef = useRef(false);
-    const startPosRef = useRef<{ x: number, y: number } | null>(null);
-    const currentPosRef = useRef<{ x: number, y: number } | null>(null);
-
     // Native event listener for pointer events
     useEffect(() => {
         const svg = svgRef.current;
@@ -62,38 +75,26 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
         // Handle touchstart to prevent scrolling for Apple Pencil
         const onTouchStart = (e: TouchEvent) => {
-            let hasStylus = false;
-            const types = [];
-
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 // @ts-ignore
-                const type = touch.touchType;
-                types.push(type);
-                if (type === 'stylus' || type === 'pen') {
-                    hasStylus = true;
+                if (touch.touchType === 'stylus' || touch.touchType === 'pen') {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                    return;
                 }
-            }
-
-
-            if (hasStylus) {
-                e.preventDefault(); // Critical: Stop iOS scroll
             }
         };
 
         const onTouchMove = (e: TouchEvent) => {
-            let hasStylus = false;
             for (let i = 0; i < e.touches.length; i++) {
                 const touch = e.touches[i];
                 // @ts-ignore
-                const type = touch.touchType;
-                if (type === 'stylus' || type === 'pen') {
-                    hasStylus = true;
+                if (touch.touchType === 'stylus' || touch.touchType === 'pen') {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                    return;
                 }
-            }
-
-            if (hasStylus) {
-                e.preventDefault();
             }
         };
 
@@ -155,7 +156,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
 
         const onPointerUp = (e: PointerEvent) => {
-            if (!isDrawingRef.current || activeTool !== 'pen') return;
+            if (!isDrawingRef.current) return;
 
             e.preventDefault();
             e.stopPropagation();
@@ -168,7 +169,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             const start = startPosRef.current;
             const current = currentPosRef.current;
 
-            if (start && current) {
+            if (start && current && activeTool === 'pen') {
                 const x = Math.min(start.x, current.x);
                 const y = Math.min(start.y, current.y);
                 const width = Math.abs(current.x - start.x);
@@ -205,14 +206,66 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
     }, [activeTool, onAddMarker]); // Re-bind when tool/callback changes
 
-    const handleMarkerClick = (index: number) => {
+    const handleMarkerPointerDown = (e: React.PointerEvent, index: number) => {
+        // Stop propagation so we don't start drawing on the SVG itself
+        e.stopPropagation();
+        e.preventDefault(); // Prevent scrolling if it bubbles
+
         if (activeTool === 'eraser') {
             onRemoveMarker(index);
+            return;
+        }
+
+        if (activeTool === 'pen') {
+            if (linkMode?.active) {
+                // In link mode, tap to link
+                onLinkMarker?.(index);
+            } else {
+                // Start Long Press Timer
+                isLongPressRef.current = false;
+                pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
+
+                longPressTimerRef.current = setTimeout(() => {
+                    isLongPressRef.current = true;
+                    onEnterLinkMode?.(index);
+                }, 500);
+            }
         }
     };
 
+    const handleMarkerPointerUp = () => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+    };
+
+    const handleMarkerPointerMove = (e: React.PointerEvent) => {
+        if (longPressTimerRef.current && pointerDownPosRef.current) {
+            const dist = Math.hypot(e.clientX - pointerDownPosRef.current.x, e.clientY - pointerDownPosRef.current.y);
+            if (dist > 10) { // If pointer moves more than 10 pixels, cancel long press
+                clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
+            }
+        }
+    };
+
+    // Helper to get center of marker
+    const getCenter = (marker: Marker) => ({
+        x: marker.x + marker.width / 2,
+        y: marker.y + marker.height / 2
+    });
+
     return (
         <div className="relative inline-block shadow-xl rounded-lg overflow-hidden bg-white mb-8">
+            {/* CSS for rotating border */}
+            <style>{`
+                @keyframes dash-rotate {
+                    to {
+                        stroke-dashoffset: -20;
+                    }
+                }
+            `}</style>
 
             <img
                 ref={imgRef}
@@ -235,27 +288,87 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                     </filter>
                 </defs>
 
-                {markers.map((marker, index) => (
-                    <rect
-                        key={index}
-                        x={marker.x}
-                        y={marker.y}
-                        width={marker.width}
-                        height={marker.height}
-                        fill="#FF69B4"
-                        fillOpacity="1.0"
-                        stroke="#C71585"
-                        strokeWidth={10 * (1 / scale)}
-                        filter="url(#marker-shadow)"
-                        onPointerDown={(e) => {
-                            if (activeTool === 'eraser') {
-                                e.stopPropagation();
-                                handleMarkerClick(index);
+                {/* Connection Lines in Link Mode */}
+                {linkMode?.active && linkMode.parentMarkerIndex !== null && markers.map((marker, index) => {
+                    const parent = markers[linkMode.parentMarkerIndex!];
+                    // If this marker is linked to parent (same groupId)
+                    // Or if this IS the parent (no line needed)
+                    if (index === linkMode.parentMarkerIndex) return null;
+
+                    // Check if linked
+                    const isLinked = parent.groupId && marker.groupId === parent.groupId;
+
+                    if (isLinked) {
+                        const pCenter = getCenter(parent);
+                        const mCenter = getCenter(marker);
+                        return (
+                            <line
+                                key={`line-${index}`}
+                                x1={pCenter.x}
+                                y1={pCenter.y}
+                                x2={mCenter.x}
+                                y2={mCenter.y}
+                                stroke="#C71585"
+                                strokeWidth={4 * (1 / scale)}
+                                strokeDasharray="8,8"
+                            />
+                        );
+                    }
+                    return null;
+                })}
+
+                {markers.map((marker, index) => {
+                    // Determine style based on Link Mode
+                    let fillOpacity = 1.0;
+                    let stroke = "#C71585";
+                    let strokeDasharray = "none";
+                    let animation = "none";
+                    let filter = "url(#marker-shadow)";
+
+                    if (linkMode?.active) {
+                        fillOpacity = 0.3; // All markers get 30% opacity in link mode
+
+                        if (index === linkMode.parentMarkerIndex) {
+                            // Parent Marker
+                            strokeDasharray = "10, 5";
+                            animation = "dash-rotate 1s linear infinite";
+                        } else {
+                            const parent = markers[linkMode.parentMarkerIndex!];
+                            const isLinked = parent.groupId && marker.groupId === parent.groupId;
+
+                            if (isLinked) {
+                                // Linked Marker
+                                stroke = "#808080"; // Gray
+                            } else {
+                                // Unlinked Marker (already has fillOpacity 0.3)
                             }
-                        }}
-                        style={{ cursor: activeTool === 'eraser' ? 'crosshair' : 'default' }}
-                    />
-                ))}
+                        }
+                    }
+
+                    return (
+                        <rect
+                            key={index}
+                            x={marker.x}
+                            y={marker.y}
+                            width={marker.width}
+                            height={marker.height}
+                            fill="#FF69B4"
+                            fillOpacity={fillOpacity}
+                            stroke={stroke}
+                            strokeWidth={10 * (1 / scale)}
+                            strokeDasharray={strokeDasharray}
+                            filter={filter}
+                            style={{
+                                cursor: activeTool === 'eraser' || (activeTool === 'pen' && linkMode?.active) ? 'crosshair' : 'default',
+                                animation: animation
+                            }}
+                            onPointerDown={(e) => handleMarkerPointerDown(e, index)}
+                            onPointerUp={handleMarkerPointerUp}
+                            onPointerMove={handleMarkerPointerMove}
+                            onPointerCancel={handleMarkerPointerUp}
+                        />
+                    );
+                })}
 
                 {isDrawing && startPos && currentPos && (
                     <rect

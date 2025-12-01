@@ -26,6 +26,13 @@ const Editor: React.FC = () => {
     // Undo History
     const [history, setHistory] = useState<HistoryItem[]>([]);
 
+    // Link Mode State
+    const [linkMode, setLinkMode] = useState<{ active: boolean, parentMarkerIndex: number | null, imageId: number | null }>({
+        active: false,
+        parentMarkerIndex: null,
+        imageId: null
+    });
+
     // Load images
     const dbImages = useLiveQuery(
         () => db.images.where('deckId').equals(Number(deckId)).sortBy('order'),
@@ -57,9 +64,17 @@ const Editor: React.FC = () => {
         const image = images.find(img => img.id === imageId);
         if (!image) return;
 
+        const targetMarker = image.markers[index];
         setHistory(prev => [...prev.slice(-9), { imageId, markers: [...image.markers] }]);
 
-        const newMarkers = image.markers.filter((_, i) => i !== index);
+        let newMarkers: Marker[];
+        if (targetMarker.groupId) {
+            // Remove all markers in the same group
+            newMarkers = image.markers.filter(m => m.groupId !== targetMarker.groupId);
+        } else {
+            newMarkers = image.markers.filter((_, i) => i !== index);
+        }
+
         await saveMarkers(imageId, newMarkers);
     };
 
@@ -71,6 +86,66 @@ const Editor: React.FC = () => {
         setHistory(newHistory);
 
         await saveMarkers(lastAction.imageId, lastAction.markers);
+    };
+
+    // Link Mode Handlers
+    const handleEnterLinkMode = (imageId: number, markerIndex: number) => {
+        setLinkMode({
+            active: true,
+            parentMarkerIndex: markerIndex,
+            imageId: imageId
+        });
+    };
+
+    const handleExitLinkMode = () => {
+        setLinkMode({
+            active: false,
+            parentMarkerIndex: null,
+            imageId: null
+        });
+    };
+
+    const handleLinkMarker = async (imageId: number, targetIndex: number) => {
+        if (!linkMode.active || linkMode.imageId !== imageId) return;
+
+        const image = images.find(img => img.id === imageId);
+        if (!image) return;
+
+        const parentIndex = linkMode.parentMarkerIndex!;
+        if (parentIndex === targetIndex) {
+            handleExitLinkMode();
+            return;
+        }
+
+        const newMarkers = [...image.markers];
+        const parentMarker = newMarkers[parentIndex];
+        const targetMarker = newMarkers[targetIndex];
+
+        // Ensure parent has a groupId
+        let groupId = parentMarker.groupId;
+        if (!groupId) {
+            groupId = crypto.randomUUID();
+            newMarkers[parentIndex] = { ...parentMarker, groupId };
+        }
+
+        // Toggle target marker's groupId
+        if (targetMarker.groupId === groupId) {
+            // Unlink
+            const { groupId: _, ...rest } = targetMarker;
+            newMarkers[targetIndex] = rest;
+
+            // If parent is the only one left, remove its groupId too (optional cleanup)
+            const othersInGroup = newMarkers.filter((m, i) => i !== parentIndex && m.groupId === groupId);
+            if (othersInGroup.length === 0) {
+                const { groupId: _, ...restParent } = newMarkers[parentIndex];
+                newMarkers[parentIndex] = restParent;
+            }
+        } else {
+            // Link
+            newMarkers[targetIndex] = { ...targetMarker, groupId };
+        }
+
+        await saveMarkers(imageId, newMarkers);
     };
 
     // Touch Handlers for Zoom/Pan
@@ -163,6 +238,19 @@ const Editor: React.FC = () => {
                 onBack={() => navigate('/')}
             />
 
+            {/* Link Mode Banner */}
+            {linkMode.active && (
+                <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 text-center z-50 shadow-lg flex justify-between items-center px-8">
+                    <span className="font-bold">Link Mode: Touch markers to link/unlink</span>
+                    <button
+                        onClick={handleExitLinkMode}
+                        className="bg-white text-blue-600 px-4 py-1 rounded-full text-sm font-bold"
+                    >
+                        Done
+                    </button>
+                </div>
+            )}
+
             {/* Zoom/Pan Container */}
             <div
                 ref={containerRef}
@@ -178,12 +266,16 @@ const Editor: React.FC = () => {
                     {images.map(image => (
                         <ImageEditor
                             key={image.id}
+                            imageId={image.id!}
                             imageData={image.imageData}
                             markers={image.markers}
                             activeTool={activeTool}
                             onAddMarker={(marker) => handleAddMarker(image.id!, marker)}
                             onRemoveMarker={(index) => handleRemoveMarker(image.id!, index)}
                             scale={transform.scale}
+                            linkMode={linkMode.imageId === image.id ? linkMode : undefined}
+                            onEnterLinkMode={(index) => handleEnterLinkMode(image.id!, index)}
+                            onLinkMarker={(index) => handleLinkMarker(image.id!, index)}
                         />
                     ))}
 

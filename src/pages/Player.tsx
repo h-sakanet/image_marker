@@ -187,6 +187,65 @@ const Player: React.FC = () => {
         }
     };
 
+    // Transparent Markers State (Ephemeral)
+    // Key: imageId, Value: Set of marker indices
+    const [transparentMarkers, setTransparentMarkers] = useState<Record<number, Set<number>>>({});
+
+    const handleMarkerTap = async (imageId: number, index: number) => {
+        const image = images.find(img => img.id === imageId);
+        if (!image) return;
+
+        const marker = image.markers[index];
+        const isLinked = !!marker.groupId;
+
+        // Find all indices in this group (including self)
+        const groupIndices = isLinked
+            ? image.markers.map((m, i) => m.groupId === marker.groupId ? i : -1).filter(i => i !== -1)
+            : [index];
+
+        // Determine current state
+        const isLocked = marker.isLocked;
+        const currentTransparentSet = transparentMarkers[imageId] || new Set();
+        const isTransparent = currentTransparentSet.has(index);
+
+        if (!isLocked && !isTransparent) {
+            // State 1 -> State 2 (Transparent)
+            const newSet = new Set(currentTransparentSet);
+            groupIndices.forEach(i => newSet.add(i));
+            setTransparentMarkers(prev => ({ ...prev, [imageId]: newSet }));
+        } else if (!isLocked && isTransparent) {
+            // State 2 -> State 3 (Locked)
+            // Update DB
+            await db.transaction('rw', db.images, async () => {
+                const currentImage = await db.images.get(imageId);
+                if (currentImage) {
+                    const newMarkers = [...currentImage.markers];
+                    groupIndices.forEach(i => {
+                        if (newMarkers[i]) newMarkers[i].isLocked = true;
+                    });
+                    await db.images.update(imageId, { markers: newMarkers });
+                }
+            });
+            // Clear transparency (it's now locked)
+            const newSet = new Set(currentTransparentSet);
+            groupIndices.forEach(i => newSet.delete(i));
+            setTransparentMarkers(prev => ({ ...prev, [imageId]: newSet }));
+        } else if (isLocked) {
+            // State 3 -> State 1 (Default)
+            // Update DB
+            await db.transaction('rw', db.images, async () => {
+                const currentImage = await db.images.get(imageId);
+                if (currentImage) {
+                    const newMarkers = [...currentImage.markers];
+                    groupIndices.forEach(i => {
+                        if (newMarkers[i]) newMarkers[i].isLocked = false;
+                    });
+                    await db.images.update(imageId, { markers: newMarkers });
+                }
+            });
+        }
+    };
+
     // Flatten all markers for navigation
     // We only want "Parent" markers (no groupId or first of group)
     // Sort by distance from top-left (0,0) of the image

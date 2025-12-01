@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowUp, ArrowDown, X, Trash2 } from 'lucide-react';
 import { db, type ImageItem, type Marker } from '../db/db';
 import Toolbar, { type ToolType } from '../components/Toolbar';
 import ImageEditor from '../components/ImageEditor';
@@ -16,6 +16,7 @@ const Editor: React.FC = () => {
     const navigate = useNavigate();
     const [activeTool, setActiveTool] = useState<ToolType>('pen');
     const [images, setImages] = useState<ImageItem[]>([]);
+    const [confirmingDeleteImageId, setConfirmingDeleteImageId] = useState<number | null>(null);
 
     // Zoom & Pan State
     // Initial scale 0.5 to fit large images better on load (since we removed max-w-full)
@@ -171,6 +172,31 @@ const Editor: React.FC = () => {
         }
 
         await saveMarkers(imageId, newMarkers);
+    };
+
+    // Image Management Handlers
+    const handleMoveImage = async (index: number, direction: 'up' | 'down') => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === images.length - 1) return;
+
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        const currentImage = images[index];
+        const targetImage = images[targetIndex];
+
+        await db.transaction('rw', db.images, async () => {
+            await db.images.update(currentImage.id!, { order: targetImage.order });
+            await db.images.update(targetImage.id!, { order: currentImage.order });
+        });
+    };
+
+    const handleDeleteImage = (imageId: number) => {
+        setConfirmingDeleteImageId(imageId);
+    };
+
+    const executeDeleteImage = async () => {
+        if (confirmingDeleteImageId === null) return;
+        await db.images.delete(confirmingDeleteImageId);
+        setConfirmingDeleteImageId(null);
     };
 
     // Touch Handlers for Zoom/Pan
@@ -366,7 +392,32 @@ const Editor: React.FC = () => {
                 onFitScreen={handleFitScreen}
             />
 
-
+            {/* Confirmation Overlay for Image Deletion */}
+            {confirmingDeleteImageId !== null && (
+                <div className="fixed inset-0 z-50 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in">
+                        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <Trash2 size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">画像を削除しますか？</h3>
+                        <p className="text-gray-600 mb-8">この操作は取り消せません。</p>
+                        <div className="flex gap-4 w-full">
+                            <button
+                                onClick={() => setConfirmingDeleteImageId(null)}
+                                className="flex-1 py-3 px-4 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={executeDeleteImage}
+                                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all"
+                            >
+                                削除する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Zoom/Pan Container */}
             <div
@@ -379,21 +430,50 @@ const Editor: React.FC = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                <div className="p-20 flex flex-col items-center gap-2 min-h-screen">
-                    {images.map(image => (
-                        <ImageEditor
-                            key={image.id}
-                            imageId={image.id!}
-                            imageData={image.imageData}
-                            markers={image.markers}
-                            activeTool={activeTool}
-                            onAddMarker={(marker) => handleAddMarker(image.id!, marker)}
-                            onRemoveMarker={(index) => handleRemoveMarker(image.id!, index)}
-                            scale={transform.scale}
-                            linkMode={linkMode.imageId === image.id ? linkMode : undefined}
-                            onEnterLinkMode={(index) => handleEnterLinkMode(image.id!, index)}
-                            onLinkMarker={(index) => handleLinkMarker(image.id!, index)}
-                        />
+                <div className="p-20 flex flex-col items-center gap-4 min-h-screen">
+                    {images.map((image, index) => (
+                        <div key={image.id} className="flex items-start gap-4 w-full max-w-5xl">
+                            <div className="flex-1">
+                                <ImageEditor
+                                    imageId={image.id!}
+                                    imageData={image.imageData}
+                                    markers={image.markers}
+                                    activeTool={activeTool}
+                                    onAddMarker={(marker) => handleAddMarker(image.id!, marker)}
+                                    onRemoveMarker={(index) => handleRemoveMarker(image.id!, index)}
+                                    scale={transform.scale}
+                                    linkMode={linkMode.imageId === image.id ? linkMode : undefined}
+                                    onEnterLinkMode={(index) => handleEnterLinkMode(image.id!, index)}
+                                    onLinkMarker={(index) => handleLinkMarker(image.id!, index)}
+                                />
+                            </div>
+                            {/* Image Controls */}
+                            <div className="flex flex-col gap-2 pt-4 pointer-events-auto">
+                                <button
+                                    onClick={() => handleMoveImage(index, 'up')}
+                                    disabled={index === 0}
+                                    className={`p-2 rounded-full shadow-sm transition-all ${index === 0 ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-600 active:scale-95'}`}
+                                    title="上へ移動"
+                                >
+                                    <ArrowUp size={24} />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteImage(image.id!)}
+                                    className="p-2 rounded-full bg-white text-gray-600 hover:bg-red-50 hover:text-red-600 shadow-sm transition-all active:scale-95"
+                                    title="画像を削除"
+                                >
+                                    <X size={24} />
+                                </button>
+                                <button
+                                    onClick={() => handleMoveImage(index, 'down')}
+                                    disabled={index === images.length - 1}
+                                    className={`p-2 rounded-full shadow-sm transition-all ${index === images.length - 1 ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-primary-600 active:scale-95'}`}
+                                    title="下へ移動"
+                                >
+                                    <ArrowDown size={24} />
+                                </button>
+                            </div>
+                        </div>
                     ))}
 
                     {images.length === 0 && (

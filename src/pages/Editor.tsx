@@ -239,8 +239,10 @@ const Editor: React.FC = () => {
                 touch1.clientY - touch2.clientY
             );
 
+            const currentLastDist = lastDistRef.current!;
+            const scaleFactor = dist / currentLastDist;
+
             setTransform(prev => {
-                const scaleFactor = dist / lastDistRef.current!;
                 const newScale = Math.min(Math.max(prev.scale * scaleFactor, 0.1), 5);
 
                 // Calculate center of pinch

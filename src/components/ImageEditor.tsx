@@ -16,7 +16,6 @@ interface ImageEditorProps {
 }
 
 const ImageEditor: React.FC<ImageEditorProps> = ({
-    imageId,
     imageData,
     markers,
     activeTool,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
-import { Settings, Pen, Plus } from 'lucide-react';
+import { FolderInput, Pen, Plus } from 'lucide-react';
 import { db, type Deck } from '../db/db';
 import GlobalSettingsModal from '../components/GlobalSettingsModal';
 import DeckCreateModal from '../components/DeckCreateModal';
@@ -69,34 +69,10 @@ const Home: React.FC = () => {
                             className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all border border-gray-200"
                             title="設定・バックアップ"
                         >
-                            <Settings size={20} />
-                        </button>
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="inline-flex items-center justify-center w-10 h-10 rounded-full shadow-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-primary-500/30"
-                        >
-                            <Plus size={24} strokeWidth={3} />
+                            <FolderInput size={20} />
                         </button>
                     </div>
                 </header>
-
-                {/* Empty State */}
-                {decks?.length === 0 && (
-                    <div className="text-center py-32">
-                        <div className="mx-auto h-24 w-24 text-gray-300 mb-4 flex items-center justify-center">
-                            <Plus size={64} strokeWidth={1} />
-                        </div>
-                        <h3 className="mt-2 text-lg font-medium text-gray-900">暗記ノートを作成しましょう</h3>
-                        <div className="mt-6">
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                            >
-                                作成する
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Deck Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -151,12 +127,23 @@ const Home: React.FC = () => {
                                     className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
                                     title="設定"
                                 >
-                                    <Settings size={18} />
+                                    <FolderInput size={18} />
                                 </button>
                             </div>
 
                         </div>
                     ))}
+
+                    {/* Create New Deck Card */}
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="group relative aspect-video bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300 hover:border-primary-400 hover:bg-primary-50 transition-all duration-300 flex flex-col items-center justify-center gap-3"
+                    >
+                        <div className="w-14 h-14 rounded-full bg-gray-200 group-hover:bg-primary-200 flex items-center justify-center transition-colors">
+                            <Plus size={28} className="text-gray-500 group-hover:text-primary-600" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-500 group-hover:text-primary-700">新規ノート作成</span>
+                    </button>
                 </div>
 
                 {isCreateModalOpen && (

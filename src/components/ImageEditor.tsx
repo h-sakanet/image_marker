@@ -93,9 +93,16 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         };
 
         const onPointerDown = (e: PointerEvent) => {
-
             // Allow touch to scroll
             if (e.pointerType === 'touch') return;
+
+            // Check if we clicked a marker (rect)
+            if ((e.target as Element).tagName === 'rect') {
+                // Prevent default to stop scrolling/zooming by browser
+                e.preventDefault();
+                // Do NOT stop propagation, so React's synthetic event system can see it
+                return;
+            }
 
             if (activeTool === 'pen') {
                 e.preventDefault();

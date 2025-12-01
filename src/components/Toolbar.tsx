@@ -9,11 +9,19 @@ interface ToolbarProps {
     onUndo: () => void;
     canUndo: boolean;
     onBack: () => void;
+    disabled?: boolean;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ activeTool, onToolChange, onUndo, canUndo, onBack }) => {
+const Toolbar: React.FC<ToolbarProps> = ({
+    activeTool,
+    onToolChange,
+    onUndo,
+    canUndo,
+    onBack,
+    disabled
+}) => {
     return (
-        <div className="fixed left-6 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-50 pointer-events-none">
+        <div className={`fixed left-6 top-1/2 -translate-y-1/2 flex flex-col gap-4 bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/50 z-40 transition-opacity duration-200 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
             <button
                 onClick={onBack}
                 className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12"

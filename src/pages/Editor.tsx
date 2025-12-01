@@ -90,6 +90,19 @@ const Editor: React.FC = () => {
 
     // Link Mode Handlers
     const handleEnterLinkMode = (imageId: number, markerIndex: number) => {
+        const image = images.find(img => img.id === imageId);
+        if (!image) return;
+
+        const marker = image.markers[markerIndex];
+
+        // Exclusive Rule: If marker is already part of a group (has groupId), it cannot become a Parent.
+        // It can only be unlinked by selecting the existing Parent (if we knew who it was) or by using Eraser.
+        // For now, just prevent entering Link Mode on an already linked marker.
+        if (marker.groupId) {
+            // Optional: Notify user? "This marker is already linked."
+            return;
+        }
+
         setLinkMode({
             active: true,
             parentMarkerIndex: markerIndex,
@@ -117,6 +130,9 @@ const Editor: React.FC = () => {
             return;
         }
 
+        // Undo Support: Save current state before modification
+        setHistory(prev => [...prev.slice(-9), { imageId, markers: [...image.markers] }]);
+
         const newMarkers = [...image.markers];
         const parentMarker = newMarkers[parentIndex];
         const targetMarker = newMarkers[targetIndex];
@@ -140,9 +156,12 @@ const Editor: React.FC = () => {
                 const { groupId: _, ...restParent } = newMarkers[parentIndex];
                 newMarkers[parentIndex] = restParent;
             }
-        } else {
-            // Link
+        } else if (!targetMarker.groupId) {
+            // Link (Only if target has no group)
             newMarkers[targetIndex] = { ...targetMarker, groupId };
+        } else {
+            // Target belongs to another group -> Ignore (Exclusive Rule)
+            // Optional: Notify user "Marker belongs to another group"
         }
 
         await saveMarkers(imageId, newMarkers);
@@ -236,6 +255,7 @@ const Editor: React.FC = () => {
                 onUndo={handleUndo}
                 canUndo={history.length > 0}
                 onBack={() => navigate('/')}
+                disabled={linkMode.active}
             />
 
             {/* Link Mode Banner */}

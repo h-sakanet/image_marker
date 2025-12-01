@@ -105,6 +105,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             }
 
             if (activeTool === 'pen') {
+                // Disable drawing in Link Mode
+                if (linkMode?.active) {
+                    e.preventDefault();
+                    return;
+                }
+
                 e.preventDefault();
                 e.stopPropagation();
                 (e.target as Element).setPointerCapture(e.pointerId);
@@ -159,33 +165,30 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         const onPointerUp = (e: PointerEvent) => {
             if (!isDrawingRef.current) return;
 
-            e.preventDefault();
-            e.stopPropagation();
+            isDrawingRef.current = false;
+            setIsDrawing(false);
             try {
                 (e.target as Element).releasePointerCapture(e.pointerId);
             } catch (err) {
                 // Ignore if not captured
             }
 
-            const start = startPosRef.current;
-            const current = currentPosRef.current;
-
-            if (start && current && activeTool === 'pen') {
-                const x = Math.min(start.x, current.x);
-                const y = Math.min(start.y, current.y);
-                const width = Math.abs(current.x - start.x);
-                const height = Math.abs(current.y - start.y);
+            if (startPosRef.current && currentPosRef.current && activeTool === 'pen') {
+                const width = Math.abs(currentPosRef.current.x - startPosRef.current.x);
+                const height = Math.abs(currentPosRef.current.y - startPosRef.current.y);
 
                 if (width > 5 && height > 5) {
-                    onAddMarker({ x, y, width, height });
+                    onAddMarker({
+                        x: Math.min(startPosRef.current.x, currentPosRef.current.x),
+                        y: Math.min(startPosRef.current.y, currentPosRef.current.y),
+                        width,
+                        height
+                    });
                 }
             }
 
-            isDrawingRef.current = false;
             startPosRef.current = null;
             currentPosRef.current = null;
-
-            setIsDrawing(false);
             setStartPos(null);
             setCurrentPos(null);
         };
@@ -205,7 +208,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             svg.removeEventListener('pointerup', onPointerUp);
             svg.removeEventListener('pointercancel', onPointerUp);
         };
-    }, [activeTool, onAddMarker]); // Re-bind when tool/callback changes
+    }, [activeTool, onAddMarker, linkMode]); // Added linkMode dependency
 
     const handleMarkerPointerDown = (e: React.PointerEvent, index: number) => {
         // Stop propagation so we don't start drawing on the SVG itself
@@ -218,6 +221,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         }
 
         if (activeTool === 'pen') {
+            // Strict check for Pen/Stylus
+            if ((e.nativeEvent as PointerEvent).pointerType !== 'pen') return;
+
             if (linkMode?.active) {
                 // In link mode, tap to link
                 onLinkMarker?.(index);
@@ -266,60 +272,82 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                     </filter>
                 </defs>
 
-                {/* Connection Lines in Link Mode */}
-                {linkMode?.active && linkMode.parentMarkerIndex !== null && markers.map((marker, index) => {
-                    const parent = markers[linkMode.parentMarkerIndex!];
-                    // If this marker is linked to parent (same groupId)
-                    // Or if this IS the parent (no line needed)
-                    if (index === linkMode.parentMarkerIndex) return null;
+                {/* Connection Lines (Always Visible if linked) */}
+                {markers.map((marker, index) => {
+                    if (!marker.groupId) return null;
 
-                    // Check if linked
-                    const isLinked = parent.groupId && marker.groupId === parent.groupId;
+                    // Find parent (first marker in group? or just connect to all others? 
+                    // User said "Parent marker... linked markers". 
+                    // But we don't store "parent" status in DB, just groupId.
+                    // Let's assume the first marker found in the group is the "anchor" for drawing lines?
+                    // Or just draw lines between all of them? 
+                    // User said "dashed line connecting them to the parent".
+                    // We need to know who is parent. 
+                    // In Link Mode we know `linkMode.parentMarkerIndex`.
+                    // Outside Link Mode, we don't know who was "parent".
+                    // BUT, for a group, maybe it doesn't matter visually? 
+                    // Or maybe we should just connect them all to the first one in the group?
 
-                    if (isLinked) {
-                        const pCenter = getCenter(parent);
-                        const mCenter = getCenter(marker);
-                        return (
-                            <line
-                                key={`line-${index}`}
-                                x1={pCenter.x}
-                                y1={pCenter.y}
-                                x2={mCenter.x}
-                                y2={mCenter.y}
-                                stroke="#C71585"
-                                strokeWidth={4 * (1 / scale)}
-                                strokeDasharray="8,8"
-                            />
-                        );
-                    }
-                    return null;
+                    // Let's find the "first" marker in this group (by index) and treat it as parent for visual purposes.
+                    const groupMarkers = markers
+                        .map((m, i) => ({ ...m, index: i }))
+                        .filter(m => m.groupId === marker.groupId);
+
+                    if (groupMarkers.length < 2) return null;
+
+                    const parent = groupMarkers[0]; // First one is "parent" visually
+                    if (index === parent.index) return null; // Don't draw line to self
+
+                    const pCenter = getCenter(parent);
+                    const mCenter = getCenter(marker);
+
+                    return (
+                        <line
+                            key={`line-${index}`}
+                            x1={pCenter.x}
+                            y1={pCenter.y}
+                            x2={mCenter.x}
+                            y2={mCenter.y}
+                            stroke="#C71585"
+                            strokeWidth={4 * (1 / scale)}
+                            strokeDasharray="8,8"
+                        />
+                    );
                 })}
 
                 {markers.map((marker, index) => {
-                    // Determine style based on Link Mode
+                    // Determine style
                     let fillOpacity = 1.0;
                     let stroke = "#C71585";
                     let strokeDasharray = "none";
                     let animation = "none";
                     let filter = "url(#marker-shadow)";
 
+                    const isLinked = !!marker.groupId;
+
                     if (linkMode?.active) {
-                        fillOpacity = 0.3; // All markers get 30% opacity in link mode
+                        fillOpacity = 0.3; // Dim everything in link mode
 
                         if (index === linkMode.parentMarkerIndex) {
-                            // Parent Marker
+                            // Active Parent
                             strokeDasharray = "10, 5";
                             animation = "dash-rotate 1s linear infinite";
-                        } else {
+                            fillOpacity = 0.3;
+                        } else if (isLinked) {
+                            // Linked (any group)
+                            // If in same group as parent, it's linked to THIS parent.
                             const parent = markers[linkMode.parentMarkerIndex!];
-                            const isLinked = parent.groupId && marker.groupId === parent.groupId;
-
-                            if (isLinked) {
-                                // Linked Marker
+                            if (parent.groupId === marker.groupId) {
                                 stroke = "#808080"; // Gray
-                            } else {
-                                // Unlinked Marker (already has fillOpacity 0.3)
                             }
+                        }
+                    } else {
+                        // Normal Mode
+                        if (isLinked) {
+                            fillOpacity = 0.3; // Linked markers always semi-transparent? User said "link destination... gray inside".
+                            // "Link destination is gray inside".
+                            // "Even if link mode is canceled... gray display continues".
+                            stroke = "#808080"; // Gray border
                         }
                     }
 

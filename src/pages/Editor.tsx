@@ -170,40 +170,46 @@ const Editor: React.FC = () => {
 
     // Touch Handlers for Zoom/Pan
     const handleTouchStart = (e: React.TouchEvent) => {
+        // Use targetTouches to only consider touches on the canvas
+        const touches = e.targetTouches;
+
         // Check if any touch is a stylus/pen
-        for (let i = 0; i < e.touches.length; i++) {
-            const touch = e.touches[i];
+        for (let i = 0; i < touches.length; i++) {
+            const touch = touches[i];
             // @ts-ignore
             if (touch.touchType === 'stylus' || touch.touchType === 'pen') {
                 return; // Ignore stylus touches for pan/zoom
             }
         }
 
-        if (e.touches.length === 1) {
-            lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else if (e.touches.length === 2) {
+        if (touches.length === 1) {
+            lastTouchRef.current = { x: touches[0].clientX, y: touches[0].clientY };
+        } else if (touches.length === 2) {
             const dist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
+                touches[0].clientX - touches[1].clientX,
+                touches[0].clientY - touches[1].clientY
             );
             lastDistRef.current = dist;
         }
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
+        e.preventDefault(); // Prevent browser gestures
+        const touches = e.targetTouches;
+
         // Check for stylus
-        for (let i = 0; i < e.touches.length; i++) {
-            const touch = e.touches[i];
+        for (let i = 0; i < touches.length; i++) {
+            const touch = touches[i];
             // @ts-ignore
             if (touch.touchType === 'stylus' || touch.touchType === 'pen') {
                 return;
             }
         }
 
-        if (e.touches.length === 1 && lastTouchRef.current) {
+        if (touches.length === 1 && lastTouchRef.current) {
             // Pan
-            const dx = e.touches[0].clientX - lastTouchRef.current.x;
-            const dy = e.touches[0].clientY - lastTouchRef.current.y;
+            const dx = touches[0].clientX - lastTouchRef.current.x;
+            const dy = touches[0].clientY - lastTouchRef.current.y;
 
             setTransform(prev => ({
                 ...prev,
@@ -211,11 +217,11 @@ const Editor: React.FC = () => {
                 y: prev.y + dy
             }));
 
-            lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else if (e.touches.length === 2 && lastDistRef.current) {
+            lastTouchRef.current = { x: touches[0].clientX, y: touches[0].clientY };
+        } else if (touches.length === 2 && lastDistRef.current) {
             // Zoom
-            const touch1 = e.touches[0];
-            const touch2 = e.touches[1];
+            const touch1 = touches[0];
+            const touch2 = touches[1];
 
             const dist = Math.hypot(
                 touch1.clientX - touch2.clientX,
@@ -243,43 +249,80 @@ const Editor: React.FC = () => {
         }
     };
 
-    const handleTouchEnd = () => {
-        lastTouchRef.current = null;
-        lastDistRef.current = null;
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        const touches = e.targetTouches;
+        if (touches.length === 0) {
+            lastTouchRef.current = null;
+            lastDistRef.current = null;
+        } else if (touches.length === 1) {
+            // Switched from 2 fingers (zoom) to 1 finger (pan)
+            lastTouchRef.current = { x: touches[0].clientX, y: touches[0].clientY };
+            lastDistRef.current = null;
+        } else {
+            lastDistRef.current = null;
+        }
     };
 
     const handleFitScreen = () => {
-        // Try to find the first image to calculate fit scale
-        const firstImg = document.querySelector('img');
-        if (firstImg && firstImg.naturalWidth > 0) {
+        if (!containerRef.current) return;
+        const imgs = Array.from(containerRef.current.querySelectorAll('img'));
+
+        if (imgs.length === 0) {
+            // Fallback
+            setTransform({ scale: 0.5, x: 0, y: 0 });
+            return;
+        }
+
+        // Find image closest to center of viewport
+        const viewportCenterY = window.innerHeight / 2;
+        let closestImg = imgs[0];
+        let minDiff = Infinity;
+
+        imgs.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            const imgCenterY = rect.top + rect.height / 2;
+            const diff = Math.abs(imgCenterY - viewportCenterY);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestImg = img;
+            }
+        });
+
+        if (closestImg && closestImg.naturalWidth > 0) {
             const padding = 40; // Horizontal padding
             const availableWidth = window.innerWidth - padding;
 
-            // Actually, if image is small, we might want to center it at 1.0.
-            // If image is huge, scale down.
-            // Let's just fit width.
-            const fitScale = availableWidth / firstImg.naturalWidth;
+            // Calculate scale to fit width
+            const fitScale = availableWidth / closestImg.naturalWidth;
 
-            // Center horizontally
-            // The transform origin is 0,0? No, CSS transform origin is usually center?
-            // Our custom transform logic applies translation then scale?
-            // `transform: translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`
-            // If we want to center:
-            // Content Width = naturalWidth * scale
-            // Screen Width = window.innerWidth
-            // x = (Screen Width - Content Width) / 2
+            // Calculate new positions
+            // We need the image's position relative to the container (unscaled)
+            const currentRect = closestImg.getBoundingClientRect();
 
-            const contentWidth = firstImg.naturalWidth * fitScale;
-            const x = (window.innerWidth - contentWidth) / 2;
+            // offsetInContainer = (currentPos - containerPos) / currentScale
+            const offsetInContainerX = (currentRect.left - transform.x) / transform.scale;
+            const offsetInContainerY = (currentRect.top - transform.y) / transform.scale;
+
+            // Target:
+            // newRect.width = naturalWidth * fitScale
+            // newRect.left = (windowWidth - newRect.width) / 2
+            // newRect.top = 100 (Top padding)
+
+            // newX = targetLeft - (offsetInContainerX * fitScale)
+            // newY = targetTop - (offsetInContainerY * fitScale)
+
+            const newWidth = closestImg.naturalWidth * fitScale;
+            const targetLeft = (window.innerWidth - newWidth) / 2;
+            const targetTop = 100;
+
+            const newX = targetLeft - (offsetInContainerX * fitScale);
+            const newY = targetTop - (offsetInContainerY * fitScale);
 
             setTransform({
                 scale: fitScale,
-                x: x,
-                y: 100 // Top padding
+                x: newX,
+                y: newY
             });
-        } else {
-            // Fallback if no image found yet
-            setTransform({ scale: 0.5, x: 0, y: 0 });
         }
     };
 

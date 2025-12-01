@@ -122,7 +122,7 @@ const Home: React.FC = () => {
                                     <img
                                         src={typeof deck.image === 'string' ? deck.image : ''}
                                         alt={deck.title}
-                                        className="w-full h-full object-cover bg-white"
+                                        className="w-full h-full object-cover object-top bg-white"
                                     />
                                 ) : (
                                     <div className="flex items-center justify-center h-full text-gray-400 bg-gray-50">

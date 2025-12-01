@@ -48,7 +48,7 @@ const DeckCreateModal: React.FC<DeckCreateModalProps> = ({ onClose, onCreated })
 
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 2.0 }); // High quality scale
+            const viewport = page.getViewport({ scale: 3.0 }); // Higher quality scale
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.height = viewport.height;
@@ -56,7 +56,7 @@ const DeckCreateModal: React.FC<DeckCreateModalProps> = ({ onClose, onCreated })
 
             if (context) {
                 await page.render({ canvasContext: context, viewport: viewport } as any).promise;
-                images.push(canvas.toDataURL('image/jpeg', 0.8));
+                images.push(canvas.toDataURL('image/jpeg', 0.95));
             }
         }
         return images;

@@ -174,7 +174,7 @@ const Editor: React.FC = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                <div className="p-20 flex flex-col items-center gap-8 min-h-screen">
+                <div className="p-20 flex flex-col items-center gap-2 min-h-screen">
                     {images.map(image => (
                         <ImageEditor
                             key={image.id}

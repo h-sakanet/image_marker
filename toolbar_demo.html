@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbar Design Options</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: sans-serif;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .preview-container {
+            position: relative;
+            width: 500px;
+            height: 600px;
+            background-image: url('https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+            /* White paper texture */
+            background-size: cover;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .label {
+            position: absolute;
+            bottom: 20px;
+            font-weight: bold;
+            color: #374151;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="preview-container">
+        <!-- Option C: Hybrid Pill -->
+        <div class="relative h-full w-full flex items-center justify-center">
+            <div class="absolute inset-0 bg-white/30"></div> <!-- Simulate content -->
+
+            <!-- Toolbar Container -->
+            <div
+                class="flex flex-col gap-3 p-2 rounded-full bg-white/90 backdrop-blur-md border border-gray-200/50 shadow-2xl">
+
+                <!-- Home Button (Transparent) -->
+                <button class="p-3 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                    <i data-lucide="house"></i>
+                </button>
+
+                <!-- Divider -->
+                <div class="h-px w-8 bg-gray-200 mx-auto"></div>
+
+                <!-- Pen Tool (Active) -->
+                <button class="p-3 rounded-full bg-blue-600 text-white shadow-md ring-2 ring-blue-100 transition-all">
+                    <i data-lucide="pen"></i>
+                </button>
+
+                <!-- Eraser Tool -->
+                <button class="p-3 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                    <i data-lucide="eraser"></i>
+                </button>
+
+                <!-- Divider -->
+                <div class="h-px w-8 bg-gray-200 mx-auto"></div>
+
+                <!-- Undo Button -->
+                <button class="p-3 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                    <i data-lucide="undo-2"></i>
+                </button>
+            </div>
+
+            <div class="label">Option C: Hybrid Pill</div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

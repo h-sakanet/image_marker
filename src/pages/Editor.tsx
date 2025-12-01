@@ -75,11 +75,12 @@ const Editor: React.FC = () => {
 
     // Touch Handlers for Zoom/Pan
     const handleTouchStart = (e: React.TouchEvent) => {
-        // If using pen and touching the drawing area, ignore pan/zoom
-        if (activeTool === 'pen') {
-            const target = e.target as Element;
-            if (target.closest('svg')) {
-                return;
+        // Check if any touch is a stylus/pen
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            // @ts-ignore
+            if (touch.touchType === 'stylus' || touch.touchType === 'pen') {
+                return; // Ignore stylus touches for pan/zoom
             }
         }
 
@@ -95,6 +96,15 @@ const Editor: React.FC = () => {
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
+        // Check for stylus
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            // @ts-ignore
+            if (touch.touchType === 'stylus' || touch.touchType === 'pen') {
+                return;
+            }
+        }
+
         if (e.touches.length === 1 && lastTouchRef.current) {
             // Pan
             const dx = e.touches[0].clientX - lastTouchRef.current.x;
@@ -109,17 +119,29 @@ const Editor: React.FC = () => {
             lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         } else if (e.touches.length === 2 && lastDistRef.current) {
             // Zoom
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+
             const dist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
+                touch1.clientX - touch2.clientX,
+                touch1.clientY - touch2.clientY
             );
 
             const scaleFactor = dist / lastDistRef.current;
             const newScale = Math.min(Math.max(transform.scale * scaleFactor, 0.5), 5);
 
+            // Calculate center of pinch
+            const cx = (touch1.clientX + touch2.clientX) / 2;
+            const cy = (touch1.clientY + touch2.clientY) / 2;
+
+            // Adjust translation to zoom towards center
+            // newTx = cx - (cx - oldTx) * (newScale / oldScale)
+            const actualScaleFactor = newScale / transform.scale;
+
             setTransform(prev => ({
-                ...prev,
-                scale: newScale
+                scale: newScale,
+                x: cx - (cx - prev.x) * actualScaleFactor,
+                y: cy - (cy - prev.y) * actualScaleFactor
             }));
 
             lastDistRef.current = dist;

@@ -475,8 +475,8 @@ const Editor: React.FC = () => {
                                         }
                                     }}
                                 >
-                                    <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center shadow-lg text-white opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                                        <Settings size={24} />
+                                    <div className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center cursor-pointer">
+                                        <Settings size={20} />
                                     </div>
                                 </div>
 

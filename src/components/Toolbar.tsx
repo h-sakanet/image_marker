@@ -27,10 +27,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             {/* Home */}
             <button
                 onClick={onBack}
-                className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12"
+                className="pointer-events-auto p-2 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center"
                 title="ホームに戻る"
             >
-                <House size={24} />
+                <House size={20} />
             </button>
 
             {/* Spacer */}
@@ -40,27 +40,27 @@ const Toolbar: React.FC<ToolbarProps> = ({
             {onFitScreen && (
                 <button
                     onClick={onFitScreen}
-                    className="pointer-events-auto p-3 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center w-12 h-12"
+                    className="pointer-events-auto p-2 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center"
                     title="画面に合わせる"
                 >
-                    <Maximize size={24} />
+                    <Maximize size={20} />
                 </button>
             )}
 
             <button
                 onClick={() => onToolChange('pen')}
-                className={`pointer-events-auto p-3 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center w-12 h-12 ${activeTool === 'pen' ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`pointer-events-auto p-2 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center ${activeTool === 'pen' ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                 title="ペン"
             >
-                <Pen size={24} />
+                <Pen size={20} />
             </button>
 
             <button
                 onClick={() => onToolChange('eraser')}
-                className={`pointer-events-auto p-3 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center w-12 h-12 ${activeTool === 'eraser' ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`pointer-events-auto p-2 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center ${activeTool === 'eraser' ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                 title="消しゴム"
             >
-                <Eraser size={24} />
+                <Eraser size={20} />
             </button>
 
             {/* Spacer */}
@@ -70,10 +70,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
                 onClick={onUndo}
                 disabled={!canUndo}
-                className={`pointer-events-auto p-3 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center w-12 h-12 ${!canUndo ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`pointer-events-auto p-2 rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center ${!canUndo ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                 title="元に戻す"
             >
-                <Undo2 size={24} />
+                <Undo2 size={20} />
             </button>
         </div>
     );

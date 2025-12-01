@@ -174,9 +174,15 @@ const Editor: React.FC = () => {
     };
 
     // Touch Handlers for Zoom/Pan
+    const getValidTouches = (touches: React.TouchList) => {
+        if (!containerRef.current) return [];
+        return Array.from(touches).filter(touch => {
+            return containerRef.current?.contains(touch.target as Node);
+        });
+    };
+
     const handleTouchStart = (e: React.TouchEvent) => {
-        // Use targetTouches to only consider touches on the canvas
-        const touches = e.targetTouches;
+        const touches = getValidTouches(e.touches);
 
         // Check if any touch is a stylus/pen
         for (let i = 0; i < touches.length; i++) {
@@ -200,7 +206,7 @@ const Editor: React.FC = () => {
 
     const handleTouchMove = (e: React.TouchEvent) => {
         e.preventDefault(); // Prevent browser gestures
-        const touches = e.targetTouches;
+        const touches = getValidTouches(e.touches);
 
         // Check for stylus
         for (let i = 0; i < touches.length; i++) {
@@ -255,7 +261,7 @@ const Editor: React.FC = () => {
     };
 
     const handleTouchEnd = (e: React.TouchEvent) => {
-        const touches = e.targetTouches;
+        const touches = getValidTouches(e.touches);
         if (touches.length === 0) {
             lastTouchRef.current = null;
             lastDistRef.current = null;
@@ -311,14 +317,14 @@ const Editor: React.FC = () => {
             // Target:
             // newRect.width = naturalWidth * fitScale
             // newRect.left = (windowWidth - newRect.width) / 2
-            // newRect.top = 100 (Top padding)
+            // newRect.top = 0 (Top aligned)
 
             // newX = targetLeft - (offsetInContainerX * fitScale)
             // newY = targetTop - (offsetInContainerY * fitScale)
 
             const newWidth = closestImg.naturalWidth * fitScale;
             const targetLeft = (window.innerWidth - newWidth) / 2;
-            const targetTop = 100;
+            const targetTop = 0;
 
             const newX = targetLeft - (offsetInContainerX * fitScale);
             const newY = targetTop - (offsetInContainerY * fitScale);

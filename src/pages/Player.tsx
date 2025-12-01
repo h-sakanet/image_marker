@@ -190,17 +190,15 @@ const Player: React.FC = () => {
 
     // Flatten all markers for navigation
     // We only want "Parent" markers (no groupId or first of group)
+    // Sort by distance from top-left (0,0) of the image
     const getAllNavigableMarkers = () => {
         const navMarkers: { imageIndex: number, markerIndex: number }[] = [];
-        images.forEach((img, imgIdx) => {
-            img.markers.forEach((m, mIdx) => {
-                // Skip if it is a child (has groupId and is not the first one we've seen? 
-                // Actually, simpler: check if it's a child based on our logic: 
-                // In ImagePlayer we derived isChild. Here we need same logic.
-                // "Link destination marker is out of target"
 
-                // If it has groupId, we need to check if it's the parent.
-                // Parent is the first marker with that groupId in the list.
+        images.forEach((img, imgIdx) => {
+            // 1. Collect valid markers for this image
+            const imgMarkers: { markerIndex: number, marker: any }[] = [];
+
+            img.markers.forEach((m, mIdx) => {
                 let isNavigable = true;
                 if (m.groupId) {
                     const parentIdx = img.markers.findIndex(gm => gm.groupId === m.groupId);
@@ -208,10 +206,34 @@ const Player: React.FC = () => {
                 }
 
                 if (isNavigable) {
-                    navMarkers.push({ imageIndex: imgIdx, markerIndex: mIdx });
+                    imgMarkers.push({ markerIndex: mIdx, marker: m });
                 }
             });
+
+            // 2. Sort by distance from top-left (0,0)
+            imgMarkers.sort((a, b) => {
+                const centerA = {
+                    x: a.marker.x + a.marker.width / 2,
+                    y: a.marker.y + a.marker.height / 2
+                };
+                const centerB = {
+                    x: b.marker.x + b.marker.width / 2,
+                    y: b.marker.y + b.marker.height / 2
+                };
+
+                // Euclidean distance squared (sufficient for comparison)
+                const distA = centerA.x * centerA.x + centerA.y * centerA.y;
+                const distB = centerB.x * centerB.x + centerB.y * centerB.y;
+
+                return distA - distB;
+            });
+
+            // 3. Add to global list
+            imgMarkers.forEach(item => {
+                navMarkers.push({ imageIndex: imgIdx, markerIndex: item.markerIndex });
+            });
         });
+
         return navMarkers;
     };
 

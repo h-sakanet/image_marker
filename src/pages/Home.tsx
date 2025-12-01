@@ -10,8 +10,8 @@ const Home: React.FC = () => {
     const decks = useLiveQuery(async () => {
         const allDecks = await db.decks.orderBy('createdAt').reverse().toArray();
         const decksWithImages = await Promise.all(allDecks.map(async (deck) => {
-            const firstImage = await db.images.where('deckId').equals(deck.id!).first();
-            return { ...deck, image: firstImage?.imageData };
+            const images = await db.images.where('deckId').equals(deck.id!).sortBy('order');
+            return { ...deck, image: images[0]?.imageData };
         }));
         return decksWithImages;
     });
@@ -68,6 +68,8 @@ const Home: React.FC = () => {
                                         <span className="text-sm">No Image</span>
                                     </div>
                                 )}
+                                {/* White Overlay for Visibility */}
+                                <div className="absolute inset-0 bg-white/20 pointer-events-none" />
                                 {/* Gradient Overlay for Text Readability */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-black/30 opacity-60 pointer-events-none" />
                             </Link>

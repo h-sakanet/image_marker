@@ -201,8 +201,10 @@ const Editor: React.FC = () => {
 
     const executeDeleteImage = async () => {
         if (confirmingDeleteImageId === null) return;
+        if (images.length <= 1) return; // Prevent deleting the last image
         await db.images.delete(confirmingDeleteImageId);
         setConfirmingDeleteImageId(null);
+        setSettingsMenuOpenId(null);
     };
 
     // Helper to check for stylus input
@@ -421,7 +423,11 @@ const Editor: React.FC = () => {
                             </button>
                             <button
                                 onClick={executeDeleteImage}
-                                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all"
+                                disabled={images.length <= 1}
+                                className={`flex-1 py-3 px-4 rounded-xl text-white font-medium shadow-lg shadow-red-500/30 transition-all ${images.length <= 1
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-red-600 hover:bg-red-700'
+                                    }`}
                             >
                                 削除する
                             </button>
@@ -501,7 +507,11 @@ const Editor: React.FC = () => {
                                         {/* Delete Button */}
                                         <button
                                             onClick={() => handleDeleteImage(image.id!)}
-                                            className="w-full flex items-center text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                            disabled={images.length <= 1}
+                                            className={`w-full flex items-center p-2 rounded-lg transition-colors ${images.length <= 1
+                                                    ? 'text-gray-400 cursor-not-allowed'
+                                                    : 'text-red-600 hover:bg-red-50'
+                                                }`}
                                         >
                                             <Trash2 size={18} className="mr-2" />
                                             <span className="text-sm font-medium">この画像を削除する</span>

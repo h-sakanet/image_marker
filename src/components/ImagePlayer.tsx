@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { db, type Marker } from '../db/db';
+import { type Marker } from '../db/db';
 
 interface ImagePlayerProps {
     imageId: number;
@@ -45,9 +45,7 @@ const ImagePlayer: React.FC<ImagePlayerProps> = ({
         y: marker.y + marker.height / 2
     });
 
-    const handleMarkerTap = (index: number) => {
-        onMarkerTap(index);
-    };
+
 
     return (
         <div className="relative inline-block shadow-xl rounded-lg overflow-hidden bg-white mb-8">

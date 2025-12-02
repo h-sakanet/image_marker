@@ -60,6 +60,12 @@ const Editor: React.FC = () => {
         setHistory(prev => [...prev.slice(-9), { imageId, markers: [...image.markers] }]);
 
         const newMarkers = [...image.markers, marker];
+
+        // Optimistic Update
+        setImages(prev => prev.map(img =>
+            img.id === imageId ? { ...img, markers: newMarkers } : img
+        ));
+
         await saveMarkers(imageId, newMarkers);
     };
 
@@ -78,6 +84,11 @@ const Editor: React.FC = () => {
             newMarkers = image.markers.filter((_, i) => i !== index);
         }
 
+        // Optimistic Update
+        setImages(prev => prev.map(img =>
+            img.id === imageId ? { ...img, markers: newMarkers } : img
+        ));
+
         await saveMarkers(imageId, newMarkers);
     };
 
@@ -87,6 +98,11 @@ const Editor: React.FC = () => {
         const lastAction = history[history.length - 1];
         const newHistory = history.slice(0, -1);
         setHistory(newHistory);
+
+        // Optimistic Update for Undo
+        setImages(prev => prev.map(img =>
+            img.id === lastAction.imageId ? { ...img, markers: lastAction.markers } : img
+        ));
 
         await saveMarkers(lastAction.imageId, lastAction.markers);
     };
@@ -183,6 +199,11 @@ const Editor: React.FC = () => {
             // Target belongs to another group -> Ignore (Exclusive Rule)
             // Optional: Notify user "Marker belongs to another group"
         }
+
+        // Optimistic Update
+        setImages(prev => prev.map(img =>
+            img.id === imageId ? { ...img, markers: newMarkers } : img
+        ));
 
         await saveMarkers(imageId, newMarkers);
     };

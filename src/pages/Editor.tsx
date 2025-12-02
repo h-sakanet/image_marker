@@ -5,6 +5,7 @@ import { Loader2, Trash2, Settings } from 'lucide-react';
 import { db, type ImageItem, type Marker } from '../db/db';
 import Toolbar, { type ToolType } from '../components/Toolbar';
 import ImageEditor from '../components/ImageEditor';
+import PageRuler from '../components/PageRuler';
 
 interface HistoryItem {
     imageId: number;
@@ -18,6 +19,7 @@ const Editor: React.FC = () => {
     const [images, setImages] = useState<ImageItem[]>([]);
     const [confirmingDeleteImageId, setConfirmingDeleteImageId] = useState<number | null>(null);
     const [settingsMenuOpenId, setSettingsMenuOpenId] = useState<number | null>(null);
+    const [currentPage, setCurrentPage] = useState(0);
 
     // Zoom & Pan State
     // Initial scale 0.5 to fit large images better on load (since we removed max-w-full)
@@ -436,6 +438,51 @@ const Editor: React.FC = () => {
         }
     };
 
+    // Page Navigation
+    const handleScrollToPage = (pageIndex: number) => {
+        if (!containerRef.current || pageIndex < 0 || pageIndex >= images.length) return;
+
+        const imgs = Array.from(containerRef.current.querySelectorAll('.image-wrapper'));
+        const targetImgWrapper = imgs[pageIndex] as HTMLElement;
+
+        if (!targetImgWrapper) return;
+
+        // Calculate new transform to center the target image
+        // We want: viewportCenterY = (targetTop * scale + transformY) + (targetHeight * scale / 2)
+        // transformY = viewportCenterY - (targetTop * scale) - (targetHeight * scale / 2)
+        // transformY = viewportCenterY - scale * (targetTop + targetHeight / 2)
+
+        const viewportCenterY = window.innerHeight / 2;
+        // const rect = targetImgWrapper.getBoundingClientRect(); // Unused
+
+        // We need the position relative to the container content, independent of current transform
+        // But getBoundingClientRect is affected by transform.
+        // Easier way: 
+        // offsetTop gives position relative to offsetParent (the container div).
+        // The container div has the transform.
+        // So targetTop = targetImgWrapper.offsetTop
+
+        const targetTop = targetImgWrapper.offsetTop;
+        const targetHeight = targetImgWrapper.offsetHeight;
+
+        const newY = viewportCenterY - transform.scale * (targetTop + targetHeight / 2);
+
+        setTransform(prev => ({
+            ...prev,
+            y: newY
+        }));
+
+        setCurrentPage(pageIndex);
+    };
+
+    // Update current page on scroll/pan (Optional, but good for sync)
+    // For now, let's just update it when we explicitly scroll or maybe check intersection?
+    // Let's keep it simple: PageRuler drives the page, but panning doesn't auto-update the highlight 
+    // unless we implement an intersection observer or check in handleTouchMove.
+    // Given the request "smoothly move", driving from Ruler is key.
+    // Let's update currentPage in handleTouchEnd to reflect where we landed?
+    // Or just leave it driven by Ruler for now.
+
     // Initial Fit
     const hasInitialFit = useRef(false);
     const location = useLocation();
@@ -468,6 +515,12 @@ const Editor: React.FC = () => {
                 onBack={() => navigate('/')}
                 disabled={linkMode.active}
                 onFitScreen={handleFitScreen}
+            />
+
+            <PageRuler
+                totalImages={images.length}
+                currentPage={currentPage}
+                onScrollToPage={handleScrollToPage}
             />
 
             {/* Confirmation Overlay for Image Deletion */}
@@ -515,7 +568,7 @@ const Editor: React.FC = () => {
             >
                 <div className="p-20 flex flex-col items-center gap-4 min-h-screen">
                     {images.map((image, index) => (
-                        <div key={image.id} className="relative w-fit">
+                        <div key={image.id} className="relative w-fit image-wrapper">
                             <ImageEditor
                                 imageId={image.id!}
                                 imageData={image.imageData}

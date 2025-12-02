@@ -62,11 +62,11 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                         const isLocked = !!marker.isLocked;
 
                         // Style Logic
-                        // Locked -> Green (#00FF00), Opacity 0.3
-                        // Unlocked -> Pink (#FF69B4), Opacity 0.5 (to be visible but not overwhelming)
-                        const fill = isLocked ? "#00FF00" : "#FF69B4";
+                        // Locked -> Green (#00FF00), Opacity 0.6 (More vivid)
+                        // Unlocked -> Deep Pink (#FF1493), Opacity 0.8 (More vivid)
+                        const fill = isLocked ? "#00FF00" : "#FF1493";
                         const stroke = isLocked ? "#006400" : "#C71585";
-                        const fillOpacity = isLocked ? 0.3 : 0.5;
+                        const fillOpacity = isLocked ? 0.6 : 0.8;
 
                         return (
                             <rect
@@ -78,7 +78,7 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                                 fill={fill}
                                 fillOpacity={fillOpacity}
                                 stroke={stroke}
-                                strokeWidth={1} // Thin stroke as requested
+                                strokeWidth={2} // Slightly thicker for visibility
                             />
                         );
                     })}

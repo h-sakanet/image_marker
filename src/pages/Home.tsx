@@ -241,7 +241,7 @@ const Home: React.FC = () => {
                             </div>
 
                             {/* Action Buttons (Top Right) */}
-                            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="absolute top-3 right-3 flex gap-2 transition-opacity duration-200 z-20">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -262,7 +262,7 @@ const Home: React.FC = () => {
                             </div>
 
                             {/* Click Area for Player */}
-                            <Link to={`/deck/${deck.id}`} className="absolute inset-0 z-0" />
+                            <Link to={`/deck/${deck.id}/play`} className="absolute inset-0 z-0" />
                         </div>
                     ))}
                 </div>

@@ -4,11 +4,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { House, Loader2, Maximize, MoveUp, MoveDown, Pen } from 'lucide-react';
 import { db, type ImageItem } from '../db/db';
 import ImagePlayer from '../components/ImagePlayer';
+import PageRuler from '../components/PageRuler';
 
 const Player: React.FC = () => {
     const { deckId } = useParams<{ deckId: string }>();
     const navigate = useNavigate();
     const [images, setImages] = useState<ImageItem[]>([]);
+    const [currentPage, setCurrentPage] = useState(0);
 
     // Zoom & Pan State
     const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
@@ -146,6 +148,63 @@ const Player: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [images]);
+
+    // Page Navigation
+    const handleScrollToPage = (pageIndex: number) => {
+        if (!containerRef.current || pageIndex < 0 || pageIndex >= images.length) return;
+
+        const imgs = Array.from(containerRef.current.querySelectorAll('.image-wrapper'));
+        const targetImgWrapper = imgs[pageIndex] as HTMLElement;
+
+        if (!targetImgWrapper) return;
+
+        const headerOffset = 0; // Align to top (0px)
+        const targetTop = targetImgWrapper.offsetTop;
+
+        const newY = headerOffset - transform.scale * targetTop;
+
+        setTransform(prev => ({
+            ...prev,
+            y: newY
+        }));
+
+        setCurrentPage(pageIndex);
+    };
+
+    // Effect to sync page number when transform changes
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const headerOffset = 0;
+        const imgs = Array.from(containerRef.current.querySelectorAll('.image-wrapper'));
+
+        let foundIndex = 0;
+        let minDiff = Infinity;
+
+        // Find the image that is closest to the top
+        for (let i = 0; i < imgs.length; i++) {
+            const img = imgs[i] as HTMLElement;
+            const visualTop = transform.y + img.offsetTop * transform.scale;
+            const visualBottom = visualTop + img.offsetHeight * transform.scale;
+
+            // If image covers the header line (top of screen)
+            if (visualTop <= headerOffset + 50 && visualBottom > headerOffset) {
+                foundIndex = i;
+                break;
+            }
+
+            // Fallback: closest to top
+            const diff = Math.abs(visualTop - headerOffset);
+            if (diff < minDiff) {
+                minDiff = diff;
+                foundIndex = i;
+            }
+        }
+
+        if (foundIndex !== -1 && foundIndex !== currentPage) {
+            setCurrentPage(foundIndex);
+        }
+    }, [transform.y, transform.scale, images.length]);
 
     // Navigation Logic
     const scrollToMarker = (markerIndex: number, imageIndex: number) => {
@@ -397,6 +456,12 @@ const Player: React.FC = () => {
                 </button>
             </div>
 
+            <PageRuler
+                totalImages={images.length}
+                currentPage={currentPage}
+                onScrollToPage={handleScrollToPage}
+            />
+
             {/* Zoom/Pan Container */}
             <div
                 ref={containerRef}
@@ -410,7 +475,7 @@ const Player: React.FC = () => {
             >
                 <div className="p-20 flex flex-col items-center gap-8 min-h-screen">
                     {images.map((image) => (
-                        <div key={image.id} className="relative w-fit">
+                        <div key={image.id} className="relative w-fit image-wrapper">
                             <ImagePlayer
                                 imageId={image.id!}
                                 imageData={image.imageData}
@@ -429,7 +494,7 @@ const Player: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

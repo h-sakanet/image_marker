@@ -368,7 +368,7 @@ const Editor: React.FC = () => {
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const headerOffset = 80;
+        const headerOffset = 0;
         const imgs = Array.from(containerRef.current.querySelectorAll('.image-wrapper'));
 
         let foundIndex = 0;
@@ -489,7 +489,7 @@ const Editor: React.FC = () => {
         // We want: headerOffset = targetTop * scale + transformY
         // transformY = headerOffset - targetTop * scale
 
-        const headerOffset = 80; // Space for header
+        const headerOffset = 0; // Align to top (0px) as requested
         const targetTop = targetImgWrapper.offsetTop;
 
         const newY = headerOffset - transform.scale * targetTop;

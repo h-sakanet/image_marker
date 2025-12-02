@@ -67,13 +67,20 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                         const stroke = isLocked ? "#006400" : "#C71585";
                         const fillOpacity = isLocked ? 0.6 : 0.8;
 
+                        // Scale 1.5x from center
+                        const scale = 1.5;
+                        const newWidth = marker.width * scale;
+                        const newHeight = marker.height * scale;
+                        const newX = marker.x - (newWidth - marker.width) / 2;
+                        const newY = marker.y - (newHeight - marker.height) / 2;
+
                         return (
                             <rect
                                 key={index}
-                                x={marker.x}
-                                y={marker.y}
-                                width={marker.width}
-                                height={marker.height}
+                                x={newX}
+                                y={newY}
+                                width={newWidth}
+                                height={newHeight}
                                 fill={fill}
                                 fillOpacity={fillOpacity}
                                 stroke={stroke}

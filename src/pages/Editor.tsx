@@ -359,7 +359,45 @@ const Editor: React.FC = () => {
 
             lastDistRef.current = dist;
         }
+
+        // Sync Page Number on Scroll (Pan)
+        // Logic is handled by useEffect on transform change
     };
+
+    // Effect to sync page number when transform changes
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const headerOffset = 80;
+        const imgs = Array.from(containerRef.current.querySelectorAll('.image-wrapper'));
+
+        let foundIndex = 0;
+        let minDiff = Infinity;
+
+        // Find the image that is closest to the top
+        for (let i = 0; i < imgs.length; i++) {
+            const img = imgs[i] as HTMLElement;
+            const visualTop = transform.y + img.offsetTop * transform.scale;
+            const visualBottom = visualTop + img.offsetHeight * transform.scale;
+
+            // If image covers the header line
+            if (visualTop <= headerOffset + 50 && visualBottom > headerOffset) {
+                foundIndex = i;
+                break;
+            }
+
+            // Fallback: closest to top
+            const diff = Math.abs(visualTop - headerOffset);
+            if (diff < minDiff) {
+                minDiff = diff;
+                foundIndex = i;
+            }
+        }
+
+        if (foundIndex !== -1 && foundIndex !== currentPage) {
+            setCurrentPage(foundIndex);
+        }
+    }, [transform.y, transform.scale, images.length]); // Only re-run when Y or Scale changes
 
     const handleTouchEnd = (e: React.TouchEvent) => {
         const touches = getValidTouches(e.touches);
@@ -447,25 +485,14 @@ const Editor: React.FC = () => {
 
         if (!targetImgWrapper) return;
 
-        // Calculate new transform to center the target image
-        // We want: viewportCenterY = (targetTop * scale + transformY) + (targetHeight * scale / 2)
-        // transformY = viewportCenterY - (targetTop * scale) - (targetHeight * scale / 2)
-        // transformY = viewportCenterY - scale * (targetTop + targetHeight / 2)
+        // Calculate new transform to align the target image's top with the top of the screen (plus offset)
+        // We want: headerOffset = targetTop * scale + transformY
+        // transformY = headerOffset - targetTop * scale
 
-        const viewportCenterY = window.innerHeight / 2;
-        // const rect = targetImgWrapper.getBoundingClientRect(); // Unused
-
-        // We need the position relative to the container content, independent of current transform
-        // But getBoundingClientRect is affected by transform.
-        // Easier way: 
-        // offsetTop gives position relative to offsetParent (the container div).
-        // The container div has the transform.
-        // So targetTop = targetImgWrapper.offsetTop
-
+        const headerOffset = 80; // Space for header
         const targetTop = targetImgWrapper.offsetTop;
-        const targetHeight = targetImgWrapper.offsetHeight;
 
-        const newY = viewportCenterY - transform.scale * (targetTop + targetHeight / 2);
+        const newY = headerOffset - transform.scale * targetTop;
 
         setTransform(prev => ({
             ...prev,

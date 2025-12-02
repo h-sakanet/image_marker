@@ -54,7 +54,7 @@ const PageRuler: React.FC<PageRulerProps> = ({ totalImages, currentPage, onScrol
             style={{ touchAction: 'none' }}
         >
             {/* Background Bar */}
-            <div className="absolute inset-y-0 right-0 w-6 bg-black/20 backdrop-blur-sm rounded-l-lg" />
+            <div className="absolute inset-y-0 right-0 w-6 bg-white/80 backdrop-blur-sm rounded-l-lg shadow-sm border-l border-gray-100" />
 
             {/* Interactive Area (Wider than visible bar for easier touch) */}
             <div
@@ -75,7 +75,7 @@ const PageRuler: React.FC<PageRulerProps> = ({ totalImages, currentPage, onScrol
                 return (
                     <div
                         key={index}
-                        className={`relative z-10 text-[10px] font-bold transition-all duration-200 ${isCurrent ? 'text-white scale-150' : 'text-white/60'
+                        className={`relative z-10 text-[10px] font-bold transition-all duration-200 ${isCurrent ? 'text-primary-600 scale-150' : 'text-gray-400'
                             }`}
                         style={{
                             opacity: showNumber || isCurrent ? 1 : 0,

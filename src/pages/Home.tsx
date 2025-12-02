@@ -62,7 +62,14 @@ const Home: React.FC = () => {
     // Search & Sort State
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-    const [sortOption, setSortOption] = useState<'titleAsc' | 'titleDesc' | 'scoreAsc' | 'scoreDesc'>('titleAsc');
+    const [sortOption, setSortOption] = useState<'titleAsc' | 'titleDesc' | 'scoreAsc' | 'scoreDesc'>(() => {
+        return (localStorage.getItem('sortOption') as any) || 'titleAsc';
+    });
+
+    // Save sort option to localStorage
+    React.useEffect(() => {
+        localStorage.setItem('sortOption', sortOption);
+    }, [sortOption]);
     const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
 
     // Filter and Sort Logic

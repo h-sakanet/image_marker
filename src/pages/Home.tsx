@@ -6,6 +6,7 @@ import { db, type Deck } from '../db/db';
 import GlobalSettingsModal from '../components/GlobalSettingsModal';
 import DeckCreateModal from '../components/DeckCreateModal';
 import DeckSettingsModal from '../components/DeckSettingsModal';
+import DeckThumbnail from '../components/DeckThumbnail';
 
 const Home: React.FC = () => {
     const decks = useLiveQuery(async () => {
@@ -47,6 +48,7 @@ const Home: React.FC = () => {
             return {
                 ...deck,
                 image: images[0]?.imageData,
+                markers: images[0]?.markers || [], // Pass markers for thumbnail
                 totalMarkers,
                 lockedMarkers
             };
@@ -213,59 +215,54 @@ const Home: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
                     {filteredAndSortedDecks.map((deck: any) => (
                         <div key={deck.id} className="group relative aspect-video bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                            {/* Image / Thumbnail */}
+                            {deck.image ? (
+                                <DeckThumbnail
+                                    imageData={deck.image}
+                                    markers={deck.markers}
+                                    alt={deck.title}
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                    <span className="text-gray-400">No Image</span>
+                                </div>
+                            )}
 
-                            {/* Main Click Area (Play) */}
-                            <Link to={`/deck/${deck.id}/play`} className="absolute inset-0 z-0">
-                                {deck.image ? (
-                                    <img
-                                        src={typeof deck.image === 'string' ? deck.image : ''}
-                                        alt={deck.title}
-                                        className="w-full h-full object-cover object-top bg-white"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400 bg-gray-50">
-                                        <span className="text-sm">No Image</span>
-                                    </div>
-                                )}
-                                {/* White Overlay for Visibility */}
-                                <div className="absolute inset-0 bg-white/30 pointer-events-none" />
-                                {/* Gradient Overlay for Text Readability */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 pointer-events-none" />
-                            </Link>
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
 
-                            {/* Title & Stats (Bottom Left) */}
-                            <div className="absolute bottom-4 left-4 z-10 pointer-events-none pr-16">
-                                <h3 className="text-lg font-bold text-white drop-shadow-md truncate leading-tight">
-                                    {deck.title}
-                                </h3>
-                                <div className="mt-1 flex items-center text-white/90 text-sm font-medium drop-shadow-md">
-                                    <span>
-                                        {deck.totalMarkers > 0 ? Math.round((deck.lockedMarkers / deck.totalMarkers) * 100) : 0}% ({deck.lockedMarkers}/{deck.totalMarkers})
-                                    </span>
+                            {/* Content */}
+                            <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                                <h3 className="text-xl font-bold text-white mb-1 line-clamp-1">{deck.title}</h3>
+                                <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+                                    <span>{Math.round((deck.totalMarkers > 0 ? deck.lockedMarkers / deck.totalMarkers : 0) * 100)}%</span>
+                                    <span className="text-white/60 text-xs">({deck.lockedMarkers}/{deck.totalMarkers})</span>
                                 </div>
                             </div>
 
                             {/* Action Buttons (Top Right) */}
-                            <div className="absolute top-3 right-3 z-20 flex gap-2">
-                                {/* Edit Button */}
-                                <Link
-                                    to={`/deck/${deck.id}/edit`}
-                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
-                                    title="編集"
-                                >
-                                    <Pen size={18} />
-                                </Link>
-
-                                {/* Settings Button */}
+                            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 <button
-                                    onClick={() => setEditingDeck(deck)}
-                                    className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all active:scale-95 flex items-center justify-center"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingDeck(deck);
+                                    }}
+                                    className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all"
                                     title="設定"
                                 >
-                                    <Settings size={18} />
+                                    <Settings size={16} />
                                 </button>
+                                <Link
+                                    to={`/deck/${deck.id}/edit`}
+                                    className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-700 hover:bg-white hover:text-primary-600 shadow-sm transition-all"
+                                    title="編集"
+                                >
+                                    <Pen size={16} />
+                                </Link>
                             </div>
 
+                            {/* Click Area for Player */}
+                            <Link to={`/deck/${deck.id}`} className="absolute inset-0 z-0" />
                         </div>
                     ))}
                 </div>

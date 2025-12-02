@@ -45,13 +45,10 @@ const Home: React.FC = () => {
                 lockedMarkers += lockedGroups.size;
             });
 
-            // Aggregate all markers for thumbnail overlay
-            const allMarkers = images.flatMap(img => img.markers);
-
             return {
                 ...deck,
                 image: images[0]?.imageData,
-                markers: allMarkers, // Pass aggregated markers
+                markers: images[0]?.markers || [], // Reverted to first image markers
                 totalMarkers,
                 lockedMarkers
             };

@@ -99,13 +99,19 @@ const Editor: React.FC = () => {
     }, []);
 
     const handleUndo = useCallback(async () => {
-        // Access history from state directly (it's in scope)
-        // But we need to use the functional update or ref if we want to be perfectly safe inside useCallback without deps?
-        // Actually, history is state. If we use it here, we need it in deps.
-        // If we put it in deps, handleUndo changes when history changes.
-        // But ImageEditor doesn't use handleUndo. Toolbar does. Toolbar re-rendering is fine.
-        // The critical one is onAddMarker passed to ImageEditor.
-    }, []);
+        if (history.length === 0) return;
+
+        const lastAction = history[history.length - 1];
+        const newHistory = history.slice(0, -1);
+        setHistory(newHistory);
+
+        // Optimistic Update for Undo
+        setImages(prev => prev.map(img =>
+            img.id === lastAction.imageId ? { ...img, markers: lastAction.markers } : img
+        ));
+
+        await saveMarkers(lastAction.imageId, lastAction.markers);
+    }, [history]);
     // Wait, handleUndo is NOT passed to ImageEditor. So we don't strictly need to memoize it for ImageEditor's sake.
     // But let's keep the pattern consistent.
     // However, for handleAddMarker, we used imagesRef to avoid 'images' dep.
@@ -501,6 +507,7 @@ const Editor: React.FC = () => {
                 className="w-full h-full touch-none origin-top-left will-change-transform"
                 style={{
                     transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+                    touchAction: 'none' // Added touch-action: none
                 }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}

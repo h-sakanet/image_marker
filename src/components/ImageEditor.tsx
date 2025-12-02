@@ -177,7 +177,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 const width = Math.abs(currentPosRef.current.x - startPosRef.current.x);
                 const height = Math.abs(currentPosRef.current.y - startPosRef.current.y);
 
-                if (width > 5 && height > 5) {
+                if (width > 5 || height > 5) {
                     onAddMarker({
                         x: Math.min(startPosRef.current.x, currentPosRef.current.x),
                         y: Math.min(startPosRef.current.y, currentPosRef.current.y),
@@ -269,6 +269,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 ref={svgRef}
                 className="absolute inset-0 w-full h-full"
                 viewBox={imgRef.current && isImageLoaded ? `0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}` : undefined}
+                style={{ touchAction: 'none' }}
             >
                 <defs>
                     <filter id="marker-shadow" x="-20%" y="-20%" width="140%" height="140%">

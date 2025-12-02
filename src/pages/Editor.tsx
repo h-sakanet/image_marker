@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Loader2, Trash2, Settings } from 'lucide-react';
@@ -116,30 +116,114 @@ const Editor: React.FC = () => {
     // Re-implementing handleAddMarker and others above.
     // I will output the full block for the handlers.
 
-    const handleLinkMarker = useCallback(async (imageId: number, targetIndex: number) => {
-        // We need linkMode in deps?
-        // linkMode is state.
-        // If linkMode changes, handleLinkMarker changes.
-        // ImageEditor depends on onLinkMarker.
-        // So if linkMode changes, ImageEditor re-binds listeners.
-        // linkMode changes when we enter/exit link mode.
-        // This is acceptable.
+    // Link Mode Handlers
+    const handleEnterLinkMode = useCallback((imageId: number, markerIndex: number) => {
+        const image = imagesRef.current.find(img => img.id === imageId);
+        if (!image) return;
 
-        // But wait, we need access to the LATEST linkMode state.
-        // If we use a ref for linkMode, we can avoid deps.
+        const marker = image.markers[markerIndex];
+
+        // Exclusive Rule: 
+        // If marker is already part of a group:
+        // - If it's the Parent (first in group), allow re-entering Link Mode to add/remove children.
+        // - If it's a Child, prevent entering (cannot become a Parent of another group).
+        if (marker.groupId) {
+            const firstIndex = image.markers.findIndex(m => m.groupId === marker.groupId);
+            if (firstIndex !== markerIndex) {
+                // It's a child -> Prevent
+                return;
+            }
+            // It's a parent -> Allow re-entry
+        }
+
+        setLinkMode({
+            active: true,
+            parentMarkerIndex: markerIndex,
+            imageId: imageId
+        });
     }, []);
 
-    // Actually, let's just use the Ref pattern for images, and let linkMode be a dependency.
-    // Changing linkMode is a mode switch, so re-binding listeners is expected.
-    // Drawing (onAddMarker) is the critical one where we don't want re-binding during the drag.
+    const handleExitLinkMode = useCallback(() => {
+        setLinkMode({
+            active: false,
+            parentMarkerIndex: null,
+            imageId: null
+        });
+    }, []);
 
-    // So:
-    // handleAddMarker -> depends on [] (uses imagesRef) -> STABLE
-    // handleRemoveMarker -> depends on [] (uses imagesRef) -> STABLE
-    // handleLinkMarker -> depends on [linkMode] (uses imagesRef) -> Changes only on mode switch -> STABLE during linking?
-    // When linking, we click. We don't drag. So re-binding is fine.
+    const handleLinkMarker = useCallback(async (imageId: number, targetIndex: number) => {
+        // Access latest linkMode from state (dependency)
+        // Note: We need to be careful about closure staleness if we didn't include linkMode in deps.
+        // But since we include it, this callback recreates when linkMode changes.
+        // This is acceptable as entering/exiting link mode is a distinct action.
 
-    // Let's go.
+        // However, to be safe inside the async function, we might want to use a ref for linkMode too if we were doing complex things,
+        // but here we just check it at the start.
+
+        if (!linkMode.active || linkMode.imageId !== imageId) return;
+
+        const image = imagesRef.current.find(img => img.id === imageId);
+        if (!image) return;
+
+        const parentIndex = linkMode.parentMarkerIndex!;
+        if (parentIndex === targetIndex) {
+            handleExitLinkMode();
+            return;
+        }
+
+        // Undo Support: Save current state before modification
+        setHistory(prev => [...prev.slice(-9), { imageId, markers: [...image.markers] }]);
+
+        const newMarkers = [...image.markers];
+        const parentMarker = newMarkers[parentIndex];
+        const targetMarker = newMarkers[targetIndex];
+
+        // Ensure parent has a groupId
+        let groupId = parentMarker.groupId;
+        if (!groupId) {
+            groupId = crypto.randomUUID();
+            newMarkers[parentIndex] = { ...parentMarker, groupId };
+        }
+
+        // Toggle target marker's groupId
+        if (targetMarker.groupId === groupId) {
+            // Unlink
+            const { groupId: _, ...rest } = targetMarker;
+            newMarkers[targetIndex] = rest;
+
+            // If parent is the only one left, remove its groupId too (optional cleanup)
+            const othersInGroup = newMarkers.filter((m, i) => i !== parentIndex && m.groupId === groupId);
+            if (othersInGroup.length === 0) {
+                const { groupId: _, ...restParent } = newMarkers[parentIndex];
+                newMarkers[parentIndex] = restParent;
+            }
+        } else if (!targetMarker.groupId) {
+            // Link (Only if target has no group)
+            newMarkers[targetIndex] = { ...targetMarker, groupId };
+
+            // Reorder if Parent is after Child (to ensure Parent controls the group)
+            if (parentIndex > targetIndex) {
+                // Move Parent to be before Child
+                // Remove Parent from old position
+                const [movedParent] = newMarkers.splice(parentIndex, 1);
+                // Insert Parent at Target's position (pushing Target down)
+                newMarkers.splice(targetIndex, 0, movedParent);
+
+                // Update Link Mode to track the moved Parent
+                setLinkMode(prev => ({ ...prev, parentMarkerIndex: targetIndex }));
+            }
+        } else {
+            // Target belongs to another group -> Ignore (Exclusive Rule)
+            // Optional: Notify user "Marker belongs to another group"
+        }
+
+        // Optimistic Update
+        setImages(prev => prev.map(img =>
+            img.id === imageId ? { ...img, markers: newMarkers } : img
+        ));
+
+        await saveMarkers(imageId, newMarkers);
+    }, [linkMode, handleExitLinkMode]);
 
     // Image Management Handlers
     const handleMoveImageTo = async (fromIndex: number, toIndex: number) => {

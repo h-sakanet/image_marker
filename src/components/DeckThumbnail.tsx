@@ -44,7 +44,7 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                 <svg
                     className="absolute inset-0 w-full h-full pointer-events-none"
                     viewBox={`0 0 ${imgRef.current.naturalWidth} ${imgRef.current.naturalHeight}`}
-                    preserveAspectRatio="xMidYMid slice"
+                    preserveAspectRatio="xMidYMin slice"
                 >
                     {markers.map((marker, index) => {
                         // Filter Logic: Hide Child Markers

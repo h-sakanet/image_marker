@@ -36,7 +36,7 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                 ref={imgRef}
                 src={imageUrl}
                 alt={alt}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
                 onLoad={() => setIsImageLoaded(true)}
             />
 
@@ -60,7 +60,6 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                         }
 
                         const isLocked = !!marker.isLocked;
-
                         // Style Logic
                         // Locked -> Green (#00FF00), Opacity 0.6 (More vivid)
                         // Unlocked -> Deep Pink (#FF1493), Opacity 0.8 (More vivid)
@@ -78,7 +77,7 @@ const DeckThumbnail: React.FC<DeckThumbnailProps> = ({ imageData, markers, alt }
                                 fill={fill}
                                 fillOpacity={fillOpacity}
                                 stroke={stroke}
-                                strokeWidth={2} // Slightly thicker for visibility
+                                strokeWidth={1} // Thin border as requested
                             />
                         );
                     })}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { House, Loader2, Maximize, MoveUp, MoveDown, Pen } from 'lucide-react';
 import { db, type ImageItem } from '../db/db';
@@ -9,11 +9,15 @@ import PageRuler from '../components/PageRuler';
 const Player: React.FC = () => {
     const { deckId } = useParams<{ deckId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [images, setImages] = useState<ImageItem[]>([]);
     const [currentPage, setCurrentPage] = useState(0);
 
     // Zoom & Pan State
-    const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
+    const [transform, setTransform] = useState(() => {
+        const state = location.state as { transform?: { scale: number, x: number, y: number } };
+        return state?.transform || { scale: 1, x: 0, y: 0 };
+    });
     const containerRef = useRef<HTMLDivElement>(null);
     const lastTouchRef = useRef<{ x: number, y: number } | null>(null);
     const lastDistRef = useRef<number | null>(null);
@@ -140,6 +144,12 @@ const Player: React.FC = () => {
     // Initial Fit
     const hasInitialFit = useRef(false);
     useEffect(() => {
+        // If we loaded transform from state, mark as fitted so we don't override it
+        const state = location.state as { transform?: { scale: number, x: number, y: number } };
+        if (state?.transform && !hasInitialFit.current) {
+            hasInitialFit.current = true;
+        }
+
         if (images.length > 0 && !hasInitialFit.current) {
             const timer = setTimeout(() => {
                 handleFitScreen();
@@ -147,7 +157,7 @@ const Player: React.FC = () => {
             }, 100);
             return () => clearTimeout(timer);
         }
-    }, [images]);
+    }, [images, location.state]);
 
     // Page Navigation
     const handleScrollToPage = (pageIndex: number) => {
@@ -448,7 +458,7 @@ const Player: React.FC = () => {
 
                 {/* Edit */}
                 <button
-                    onClick={() => navigate(`/deck/${deckId}/edit`, { state: { transform } })}
+                    onClick={() => navigate(`/deck/${deckId}/edit`, { state: { transform, fromPlayer: true } })}
                     className="pointer-events-auto p-2 rounded-full bg-white text-gray-600 shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center"
                     title="編集"
                 >

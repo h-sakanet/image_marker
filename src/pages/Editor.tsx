@@ -52,8 +52,21 @@ const Editor: React.FC = () => {
 
     // Use ref for images to allow stable handlers
     const imagesRef = useRef(images);
+    const prevImagesLength = useRef(images.length);
+
     useEffect(() => {
         imagesRef.current = images;
+
+        // Handle deletion: if images length decreases, we might be looking at void.
+        // Snap to the valid page.
+        if (images.length < prevImagesLength.current && images.length > 0) {
+            // Wait for DOM update
+            setTimeout(() => {
+                const newPage = Math.min(currentPage, images.length - 1);
+                handleScrollToPage(newPage);
+            }, 0);
+        }
+        prevImagesLength.current = images.length;
     }, [images]);
 
     // Save marker changes to DB
@@ -532,6 +545,15 @@ const Editor: React.FC = () => {
         }
     }, [images, location.state]);
 
+    const handleBack = () => {
+        const state = location.state as { fromPlayer?: boolean };
+        if (state?.fromPlayer) {
+            navigate(`/deck/${deckId}/play`, { state: { transform } });
+        } else {
+            navigate('/');
+        }
+    };
+
     return (
         <div className="h-screen w-screen overflow-hidden bg-gray-100 relative">
             <Toolbar
@@ -539,7 +561,7 @@ const Editor: React.FC = () => {
                 onToolChange={setActiveTool}
                 onUndo={handleUndo}
                 canUndo={history.length > 0}
-                onBack={() => navigate('/')}
+                onBack={handleBack}
                 disabled={linkMode.active}
                 onFitScreen={handleFitScreen}
             />

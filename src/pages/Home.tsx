@@ -109,14 +109,32 @@ const Home: React.FC = () => {
         return result;
     }, [decks, searchQuery, sortOption]);
 
+    // Calculate Global Stats
+    const { globalTotal, globalLocked } = React.useMemo(() => {
+        let total = 0;
+        let locked = 0;
+        filteredAndSortedDecks.forEach((deck: any) => {
+            total += deck.totalMarkers || 0;
+            locked += deck.lockedMarkers || 0;
+        });
+        return { globalTotal: total, globalLocked: locked };
+    }, [filteredAndSortedDecks]);
+
+    const globalRate = globalTotal > 0 ? Math.round((globalLocked / globalTotal) * 100) : 0;
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20 touch-pan-y" onClick={() => { setIsSortMenuOpen(false); if (!searchQuery) setIsSearchExpanded(false); }}>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <header className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur-md mb-6 transition-all py-4 px-4 -mx-4 sm:px-0 sm:mx-0 flex items-center justify-between">
-                    <h1 className={`text-2xl font-bold text-gray-900 tracking-tight whitespace-nowrap transition-opacity duration-300 ${isSearchExpanded ? 'opacity-0 sm:opacity-100 hidden sm:block' : 'opacity-100'}`}>
-                        暗記ノート
-                    </h1>
+                    <div className={`flex items-baseline gap-3 transition-opacity duration-300 ${isSearchExpanded ? 'opacity-0 sm:opacity-100 hidden sm:flex' : 'opacity-100 flex'}`}>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight whitespace-nowrap">
+                            暗記ノート
+                        </h1>
+                        <span className="text-sm font-bold text-gray-500">
+                            {globalRate}% <span className="text-xs font-medium">({globalLocked}/{globalTotal})</span>
+                        </span>
+                    </div>
 
                     <div className="flex items-center gap-1 sm:gap-2 ml-auto">
                         {/* Expandable Search Bar */}
